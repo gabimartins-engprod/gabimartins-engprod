@@ -65,3 +65,38 @@ Caso alguma coluna não exista na origem, ela é criada com valores nulos.
   - Correção_Automática
   - Registros_Contatos_Auto
   - Histórico_Bitrix
+
+    ---
+
+## Correção_Automática
+
+Consulta que gera a base **limpa e padronizada** usada no restante do fluxo (ex.: Registros_Contatos_Auto).
+
+### Função
+- Recebe os dados da `Bruta_Bitrix`
+- Garante a existência da coluna `Parent task ID`
+- Mantém apenas colunas necessárias ao fluxo de contatos
+- Aplica tipagem nas colunas de data (Created on, Modified on, DataArquivo)
+
+### Origem dos dados
+- Consulta `Bruta_Bitrix`
+
+### Tipo de carregamento
+- Carrega em planilha (tabela do Excel): **Correção_Automática**
+
+### Colunas de saída (contrato)
+- ID
+- Parent task ID
+- Estágio
+- Tags
+- Status
+- Created on
+- Modified on
+- Task
+- Description
+- NomeArquivo
+- DataArquivo
+
+### Observações técnicas
+- Serve como base para `Registros_Contatos_Auto` e demais consultas dependentes.
+- Mudanças em nomes de colunas podem impactar o VBA (sincronização e fórmulas).
