@@ -100,3 +100,32 @@ Consulta que gera a base **limpa e padronizada** usada no restante do fluxo (ex.
 ### Observações técnicas
 - Serve como base para `Registros_Contatos_Auto` e demais consultas dependentes.
 - Mudanças em nomes de colunas podem impactar o VBA (sincronização e fórmulas).
+
+---
+
+## Registros_Contatos_Auto
+
+Consulta intermediária que cria a base automática de contatos a partir da `Correção_Automática`.
+
+### Função
+- Extrair `Plano`, `Nome` e `Matrícula` a partir do texto do campo `Task`
+- Manter `ID`, `Parent task ID` e `Created on`
+- Remover duplicidades e ordenar por `ID`
+
+### Origem dos dados
+- Consulta `Correção_Automática`
+
+### Tipo de carregamento
+- Carrega em planilha (tabela do Excel): **Registros_Contatos_Auto**
+
+### Colunas de saída (contrato)
+- ID
+- Parent task ID
+- Created on
+- Plano
+- Nome
+- Matrícula
+
+### Observações técnicas
+- A extração de Nome usa heurística (tokens separados por “-” e lista de palavras bloqueadas).
+- A extração de Matrícula busca sequências numéricas entre 6 e 12 dígitos no texto.
