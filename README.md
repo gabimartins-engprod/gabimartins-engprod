@@ -1,16 +1,20 @@
-## Hi there 👋
+# Engenharia de Produção — Faculdade & Estágio
 
-<!--
-**gabimartins-engprod/gabimartins-engprod** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+Repositório utilizado para organização de estudos acadêmicos e atividades práticas
+relacionadas à Engenharia de Produção.
 
-Here are some ideas to get you started:
+## 📚 Faculdade
+Materiais de disciplinas, trabalhos, exercícios e estudos relacionados à graduação
+em Engenharia de Produção.
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+## 🏢 Estágio — Postalis
+Organização de estudos, rotinas, indicadores e materiais de apoio desenvolvidos
+durante o estágio no Postalis.
+
+⚠️ Este repositório não contém dados sensíveis, informações confidenciais ou dados
+pessoais protegidos.
+
+## 🛠 Ferramentas utilizadas
+- Excel
+- Power BI
+- Python (em aprendizado)
