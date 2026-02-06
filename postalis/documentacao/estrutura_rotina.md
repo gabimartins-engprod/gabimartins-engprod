@@ -105,27 +105,59 @@ Consulta que gera a base **limpa e padronizada** usada no restante do fluxo (ex.
 
 ## Registros_Contatos_Auto
 
-Consulta intermediária que cria a base automática de contatos a partir da `Correção_Automática`.
+Consulta responsável por criar automaticamente a base de contatos a partir da Correção_Automática, consolidando informações contidas no texto do campo Task em uma estrutura única, padronizada e deduplicada.
 
-### Função
-- Extrair `Plano`, `Nome` e `Matrícula` a partir do texto do campo `Task`
-- Manter `ID`, `Parent task ID` e `Created on`
-- Remover duplicidades e ordenar por `ID`
+‐
+### Responsabilidades
 
+Extrair Plano, Nome e Matrícula a partir do texto do campo Task;
+
+Manter os campos de controle e rastreabilidade:
+
+ID
+
+Parent task ID
+
+Created on;
+
+Normalizar separadores textuais (-, –, —);
+
+Remover duplicidades garantindo 1 linha por ID;
+
+Manter sempre o registro mais recente com base no campo Created on.
+
+‐
 ### Origem dos dados
-- Consulta `Correção_Automática`
 
+Consulta Correção_Automática
+
+‐
 ### Tipo de carregamento
-- Carrega em planilha (tabela do Excel): **Registros_Contatos_Auto**
 
+Carrega em planilha do Excel
+
+Tabela: Registros_Contatos_Auto
+
+‐
 ### Colunas de saída (contrato)
-- ID
-- Parent task ID
-- Created on
-- Plano
-- Nome
-- Matrícula
 
+ID
+
+Parent task ID
+
+Created on
+
+Plano
+
+Nome
+
+Matrícula
+
+‐
 ### Observações técnicas
-- A extração de Nome usa heurística (tokens separados por “-” e lista de palavras bloqueadas).
-- A extração de Matrícula busca sequências numéricas entre 6 e 12 dígitos no texto.
+
+A extração do Nome utiliza heurística baseada em tokens separados por “-”, exigindo presença de espaço, ausência de dígitos e exclusão por lista de palavras bloqueadas;
+
+A extração da Matrícula identifica sequências numéricas entre 6 e 12 dígitos, retornando apenas os números;
+
+A deduplicação é realizada por ID, preservando o registro mais recente conforme Created on.
