@@ -11,7 +11,7 @@
 // DESTINO:
 //   Tabela carregada em planilha (tblHistoricoBitrix), com aba mantida oculta.
 //
-// ATUALIZADO EM: 09/02/2026
+//  VERSÃO: Atualizado em 09/02/2026
 // RESPONSÁVEL: Gabi (Postalis)
 //
 // LÓGICA PRINCIPAL:
