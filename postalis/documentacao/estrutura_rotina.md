@@ -206,3 +206,44 @@ Unificar a base automática de contatos com os dados manuais persistentes, produ
 
 **Tipo de carga**
 - Consolidação local (Power Query).
+
+---
+
+### Monitoramento_Extracao - VERSÃO: Atualizado em 09/02/2026
+
+Consulta de apoio utilizada para validação técnica e análise histórica do ciclo dos IDs.
+
+**Finalidade**  
+Fornecer uma visão consolidada do universo histórico de IDs, permitindo identificar:
+- IDs atualmente **Dentro** da extração;
+- IDs **Fora** da extração (com data da última aparição);
+- entradas recentes, com base na **primeira aparição registrada no histórico**.
+
+**Fluxo lógico**
+- Leitura do histórico consolidado (`Histórico_Bitrix`);
+- Cálculo da primeira e da última aparição por ID;
+- Comparação com a extração atual (`Registros_Contatos_Auto`);
+- Classificação do status do ID (Dentro/Fora).
+
+**Campos principais**
+- `ID`
+- `Primeira Aparição`
+- `Última Aparição`
+- `Status` (Dentro da extração / Fora da extração)
+- `Data Saída` (aplicável apenas a IDs fora da extração)
+- `NomeArquivo (Último)` (campo auxiliar para auditoria)
+
+**Características**
+- Consulta de caráter **técnico e analítico**.
+- Não utilizada como rotina operacional.
+- Não altera dados de origem.
+- Não controla reentradas nem ciclos operacionais diários.
+
+**Fonte de dados**
+- Consultas internas do Power Query:
+  - `Histórico_Bitrix`
+  - `Registros_Contatos_Auto`
+
+**Tipo de carga**
+- Consolidação local (Power Query).
+
