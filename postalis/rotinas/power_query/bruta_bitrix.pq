@@ -23,7 +23,7 @@
 //   - Garante colunas obrigatórias, criando-as como nulas quando ausentes
 //   - Adiciona metadados: NomeArquivo e DataArquivo
 //
-// VERSÃO: v1.1 – atualizado em 09/02/2026
+//  VERSÃO: Atualizado em 09/02/2026
 // RESPONSÁVEL: Gabi (Postalis)
 //
 // OBSERVAÇÃO:
