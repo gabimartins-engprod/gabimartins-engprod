@@ -73,64 +73,22 @@ Esta consulta deve ser utilizada como **fonte única** pelas consultas subsequen
 
 ---
 
-## Registros_Contatos_Auto
+### Registros_Contatos_Auto
 
-Consulta responsável por criar automaticamente a base de contatos a partir da Correção_Automática, consolidando informações contidas no texto do campo Task em uma estrutura única, padronizada e deduplicada.
+Camada de extração automática de informações textuais a partir da base tratada.
 
-‐
-### Responsabilidades
-
-Extrair Plano, Nome e Matrícula a partir do texto do campo Task;
-
-Manter os campos de controle e rastreabilidade:
-
-ID
-
-Parent task ID
-
-Created on;
-
-Normalizar separadores textuais (-, –, —);
-
-Remover duplicidades garantindo 1 linha por ID;
-
-Manter sempre o registro mais recente com base no campo Created on.
-
-‐
-### Origem dos dados
-
-Consulta Correção_Automática
-
-‐
-### Tipo de carregamento
-
-Carrega em planilha do Excel
-
-Tabela: Registros_Contatos_Auto
-
-‐
-### Colunas de saída (contrato)
-
-ID
-
-Parent task ID
-
-Created on
-
-Plano
-
-Nome
-
-Matrícula
-
-‐
-### Observações técnicas
-
-A extração do Nome utiliza heurística baseada em tokens separados por “-”, exigindo presença de espaço, ausência de dígitos e exclusão por lista de palavras bloqueadas;
-
-A extração da Matrícula identifica sequências numéricas entre 6 e 12 dígitos, retornando apenas os números;
-
-A deduplicação é realizada por ID, preservando o registro mais recente conforme Created on.
+- **Origem:** Correção_Automática  
+- **Finalidade:** Extrair automaticamente, a partir do campo `Task`, os campos `Plano`, `Nome` e `Matrícula`, mantendo `ID`, `Parent task ID` e `Created on`.  
+- **Regras principais:**
+  - Normalização do texto de `Task` para padronização de separadores;
+  - Heurística para identificação de nomes próprios (tokens com espaço, sem dígitos e sem palavras bloqueadas);
+  - Extração de matrícula por padrão numérico (6 a 12 dígitos);
+  - Remoção de linhas com `ID` nulo ou vazio;
+  - Deduplicação final garantindo 1 registro por `ID`, preservando o `Created on` mais recente.
+- **Observação:**  
+  Consulta intermediária, sem lógica de status, histórico ou controle temporal. Deve ser utilizada exclusivamente como base para `Registros_Contatos_Final`.
+  
+---
 
 ### Histórico_Bitrix
 
