@@ -54,38 +54,22 @@ Responsável por localizar automaticamente o arquivo de extração mais recente 
 
     ---
 
-## Correção_Automática
+### Correção_Automática
 
-Consulta que gera a base **limpa e padronizada** usada no restante do fluxo (ex.: Registros_Contatos_Auto).
+Camada de tratamento automático da extração Bitrix.
 
-### Função
-- Recebe os dados da `Bruta_Bitrix`
-- Garante a existência da coluna `Parent task ID`
-- Mantém apenas colunas necessárias ao fluxo de contatos
-- Aplica tipagem nas colunas de data (Created on, Modified on, DataArquivo)
+- **Origem:** Bruta_Bitrix  
+- **Finalidade:** Padronizar e limpar os dados brutos, gerando a base oficial utilizada pelas demais consultas do fluxo.  
+- **Responsabilidades:**
+  - Validar a existência da coluna essencial `ID`;
+  - Garantir a coluna `Parent task ID`;
+  - Selecionar apenas as colunas necessárias ao monitoramento de contatos;
+  - Forçar tipagem consistente (IDs como texto e datas normalizadas);
+  - Converter `DataArquivo` para tipo *date* de forma robusta.
+- **Observação:**  
+  Não possui qualquer lógica de histórico, comparação temporal ou cálculo de status. Atua exclusivamente como camada de staging.
 
-### Origem dos dados
-- Consulta `Bruta_Bitrix`
-
-### Tipo de carregamento
-- Carrega em planilha (tabela do Excel): **Correção_Automática**
-
-### Colunas de saída (contrato)
-- ID
-- Parent task ID
-- Estágio
-- Tags
-- Status
-- Created on
-- Modified on
-- Task
-- Description
-- NomeArquivo
-- DataArquivo
-
-### Observações técnicas
-- Serve como base para `Registros_Contatos_Auto` e demais consultas dependentes.
-- Mudanças em nomes de colunas podem impactar o VBA (sincronização e fórmulas).
+Esta consulta deve ser utilizada como **fonte única** pelas consultas subsequentes, evitando consumo direto da Bruta_Bitrix.
 
 ---
 
