@@ -161,3 +161,50 @@ A extração do Nome utiliza heurística baseada em tokens separados por “-”
 A extração da Matrícula identifica sequências numéricas entre 6 e 12 dígitos, retornando apenas os números;
 
 A deduplicação é realizada por ID, preservando o registro mais recente conforme Created on.
+
+### Histórico_Bitrix
+
+Consulta responsável por consolidar o histórico diário das extrações do Bitrix, garantindo correspondência exata entre cada arquivo de extração e o respectivo dia.
+
+**Principais responsabilidades:**
+- Ler os arquivos de extração Bitrix a partir de pasta local configurada
+- Considerar apenas arquivos Excel válidos (`.xlsx`, `.xls`, `.xlsm`)
+- Priorizar arquivos iniciados com `GT_PP_`
+- Selecionar automaticamente **um único arquivo por dia**, definido pelo campo *Data de modificação*
+- Identificar dinamicamente a aba ou tabela que contém a coluna **ID**
+- Normalizar e padronizar as principais colunas
+- Adicionar os campos **NomeArquivo** e **DataArquivo**
+- Consolidar histórico diário por ID, mantendo uma linha por ID por data
+
+**Origem dos dados:**
+- Pasta local contendo os arquivos Excel de extração do Bitrix
+- Caminho configurado diretamente na consulta Power Query
+
+**Tipo de carregamento:**
+- Carrega em planilha (tabela `tblHistoricoBitrix`)
+- Aba mantida oculta, utilizada para auditoria e validações pontuais
+
+**Colunas entregues (contrato):**
+- ID  
+- Parent task ID  
+- Estágio  
+- Tags  
+- Status  
+- Created on  
+- Modified on  
+- Task  
+- Description  
+- NomeArquivo  
+- DataArquivo  
+
+> Caso alguma coluna não exista na origem, ela é criada com valores nulos.
+
+**Observações técnicas:**
+- O arquivo considerado por dia é definido pelo campo **Date modified**
+- O histórico mantém consistência 1:1 entre extração diária e registros carregados
+- Esta consulta serve como base para:
+  - Registros_Contatos_Auto
+  - Registros_Contatos_Final
+
+---
+
