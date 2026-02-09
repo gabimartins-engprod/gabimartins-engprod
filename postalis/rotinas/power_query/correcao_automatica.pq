@@ -5,7 +5,7 @@
 //             usadas no restante do fluxo (Registros_Contatos_Auto, etc.).
 // ORIGEM DOS DADOS: Consulta Bruta_Bitrix
 // DESTINO: Tabela Correção_Automática no Excel
-// VERSÃO: v1.1 – atualizado em 09/02/2026
+// VERSÃO: Atualizado em 09/02/2026
 // RESPONSÁVEL: Gabi (Postalis)
 // OBSERVAÇÕES IMPORTANTES:
 // - Valida a existência da coluna essencial ID.
