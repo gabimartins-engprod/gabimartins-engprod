@@ -169,3 +169,40 @@ Esta consulta representa a camada de dados manuais persistentes do sistema e nã
 
 ---
 
+### Registros_Contatos_Final - VERSÃO: Atualizado em 09/02/2026
+
+Consulta principal de consolidação da Rotina_Dados – Postalis.
+
+**Finalidade**  
+Unificar a base automática de contatos com os dados manuais persistentes, produzindo a visão final resumida utilizada para acompanhamento operacional e métricas.
+
+**Fluxo lógico**
+- Base automática (`Registros_Contatos_Auto`) como referência de IDs ativos.
+- Base manual (`Registros_Contatos_Manual`) como fonte de histórico humano de contatos.
+- Merge por `ID` com proteção para manter apenas uma linha manual por ID.
+- Aplicação da regra oficial de “Último Contato”.
+
+**Regra de Último Contato**
+- Considera exclusivamente `Data_1` a `Data_5`.
+- Último contato = maior data preenchida.
+- Em caso de empate, prevalece o maior índice (5 > 4 > … > 1).
+- OBS e Responsável são associados à mesma posição da data escolhida.
+
+**Campos derivados**
+- `Data` (último contato)
+- `OBS` (observação do último contato)
+- `Responsável` (responsável do último contato)
+- `Qtd. tentativas` (quantidade de datas preenchidas entre Data_1 e Data_5)
+- `Dias sem contato` (diferença em dias entre hoje e o último contato)
+
+**Características**
+- Não altera dados de origem.
+- Não recria nem remove registros.
+- Mantém uma linha por ID na saída.
+- Preparada para integração com rotinas VBA (Dentro/Fora, Datas históricas, logs).
+
+**Fonte de dados**
+- Consultas internas do Power Query.
+
+**Tipo de carga**
+- Consolidação local (Power Query).
