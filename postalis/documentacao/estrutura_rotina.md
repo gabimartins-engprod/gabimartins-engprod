@@ -136,3 +136,36 @@ Consulta responsável por consolidar o histórico diário das extrações do Bit
 
 ---
 
+### Registros_Contatos_Manual - VERSÃO: Atualizado em 09/02/2026
+
+Consulta destinada à leitura da base manual persistente de contatos.
+
+**Finalidade**  
+Expor a tabela de preenchimento manual com tipagem consistente, servindo como base auxiliar para:
+- merge com a base automática (`Registros_Contatos_Final`);
+- uso em rotinas VBA;
+- cálculo posterior de métricas (ex.: último contato, dias sem contato).
+
+**Características principais**
+- Não altera dados.
+- Não recria a tabela.
+- Não remove nem insere registros.
+- Mantém 1 linha por ID (controle humano).
+- Blindada contra ausência ou renomeação de colunas.
+
+**Regras de tipagem**
+- `Created on`: datetime (data e hora).
+- `Data_1` a `Data_5`: date (somente data).
+- Campos textuais (ID, telefone, observações, responsáveis, e-mail, etc.): text.
+
+**Fonte de dados**
+- Tabela Excel `Registros_Contatos_Manual` (ThisWorkbook).
+
+**Tipo de carga**
+- Leitura direta local, sem dependências externas.
+
+**Observação**
+Esta consulta representa a camada de dados manuais persistentes do sistema e não deve sofrer transformações que impliquem perda de informação.
+
+---
+
