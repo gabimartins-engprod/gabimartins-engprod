@@ -19,7 +19,7 @@ Documento de caráter acadêmico e organizacional.
 
 ---
 
-### Bruta_Bitrix
+### Bruta_Bitrix - VERSÃO: Atualizado em 09/02/2026
 
 Consulta base do sistema **Rotina_Dados – Postalis**.
 
@@ -54,7 +54,7 @@ Responsável por localizar automaticamente o arquivo de extração mais recente 
 
     ---
 
-### Correção_Automática
+### Correção_Automática - VERSÃO: Atualizado em 09/02/2026
 
 Camada de tratamento automático da extração Bitrix.
 
@@ -73,7 +73,7 @@ Esta consulta deve ser utilizada como **fonte única** pelas consultas subsequen
 
 ---
 
-### Registros_Contatos_Auto
+### Registros_Contatos_Auto - VERSÃO: Atualizado em 09/02/2026
 
 Camada de extração automática de informações textuais a partir da base tratada.
 
@@ -90,7 +90,7 @@ Camada de extração automática de informações textuais a partir da base trat
   
 ---
 
-### Histórico_Bitrix
+### Histórico_Bitrix - VERSÃO: Atualizado em 09/02/2026
 
 Consulta responsável por consolidar o histórico diário das extrações do Bitrix, garantindo correspondência exata entre cada arquivo de extração e o respectivo dia.
 
