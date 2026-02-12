@@ -1,5 +1,5 @@
 ' =====================================================================================
-' MÓDULO: Planilha2 (Registros Contatos)
+' MÓDULO: Planilha3 (Registros Contatos)
 ' SISTEMA: Rotina_Dados – Postalis
 ' FINALIDADE: Sem nada até o momento
 '
