@@ -92,20 +92,21 @@ Camada de extração automática de informações textuais a partir da base trat
 
 ### Histórico_Bitrix - VERSÃO: Atualizado em 12/02/2026
 
-Consulta responsável por consolidar o histórico diário das extrações do Bitrix,
-garantindo rastreabilidade completa por ID e controle correto de movimentações
-(ENTROU / SAIU / RETORNOU) no log de sincronização.
+Consulta responsável por consolidar o histórico diário das extrações do Bitrix, garantindo correspondência entre cada arquivo extraído e o respectivo dia, e habilitando a regra “última extração do dia” via campo DataHoraExtracao (DateTime).
 
 **Principais responsabilidades:**
 
-• Ler os arquivos de remoção do Bitrix a partir da pasta local configurada
-• Considerar apenas arquivos Excel válidos (.xlsx, .xls, .xlsm)
-• Priorizar arquivos iniciados com GT_PP_
-• Selecionar automaticamente um único arquivo por dia
-• Identificar dinamicamente a aba ou tabela que contém a coluna ID
-• Normalizar e padronizar as principais colunas
-• Adicionar os campos NomeArquivo, DataArquivo e DataHoraExtracao
-• Consolidar histórico diário por ID, mantendo uma linha por ID por dia
+• Ler arquivos de extração Bitrix a partir de pasta local configurada.
+• Considerar apenas arquivos Excel válidos (.xlsx, .xls, .xlsm) e ignorar ~$.
+• Priorizar arquivos iniciados com GT_PP_ (fallback para “Extração Bitrix” se não existir GT_PP_).
+• Criar e manter:
+  - NomeArquivo (nome do arquivo de origem)
+  - DataArquivo (data do dia da extração – tipo date)
+  - DataHoraExtracao (data+hora da extração – tipo datetime, derivada do NomeArquivo)
+• Para cada dia (DataArquivo), manter apenas o arquivo mais recente do dia com base em DataHoraExtracao (regra “última extração do dia”).
+• Identificar dinamicamente a aba/tabela que contém a coluna ID (não depende de “Sheet1”).
+• Normalizar/padronizar colunas principais e garantir colunas ausentes como null.
+• Consolidar histórico diário por ID, mantendo consistência por dia.
 
 **Regra oficial para múltiplas extrações no mesmo dia:**
 
@@ -127,19 +128,19 @@ para cálculo de movimentações.
 
 **Colunas entregues (contrato):**
 
-EU IA
 ID
-ID da tarefa principal
+Parent task ID
 Estágio
-Etiquetas
+Tags
 Status
-Criado em
-Modificado em
-Tarefa
-Descrição
+Created on
+Modified on
+Task
+Description
 NomeArquivo
-DataArquivo
-DataHoraExtracao  ← (DateTime oficial da extração)
+DataArquivo (date)
+DataHoraExtracao (datetime)
+(colunas auxiliares, se mantidas) ParteHora / HoraNum / MinutoNum
 
 Caso alguma coluna não exista na origem, ela é criada com valores nulos.
 
