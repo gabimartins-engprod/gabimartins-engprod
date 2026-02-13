@@ -90,7 +90,7 @@ Camada de extração automática de informações textuais a partir da base trat
   
 ---
 
-### Histórico_Bitrix - VERSÃO: Atualizado em 12/02/2026
+### Histórico_Bitrix - VERSÃO: Atualizado em 13/02/2026
 
 Consulta responsável por consolidar o histórico diário das extrações do Bitrix, garantindo correspondência exata entre cada arquivo de extração e o respectivo dia.
 
