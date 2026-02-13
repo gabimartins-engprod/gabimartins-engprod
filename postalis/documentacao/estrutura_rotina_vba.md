@@ -65,7 +65,7 @@ Executa a sequência: (1) RefreshAll do Power Query, (2) rotina interna de sincr
 
 ---
 
-## modSincronizarContatos - Atualizado em 13/02/2026
+## modSincronizarContatos - Atualizado em 12/02/2026
 
 **Finalidade:** Sincronizar a base oficial de contatos (`Registros_Contatos_Final`) com a extração (`Correção_Automática`) e manter uma tabela de histórico manual (`Registros_Contatos_Manual`) sem nunca apagar linhas.
 
