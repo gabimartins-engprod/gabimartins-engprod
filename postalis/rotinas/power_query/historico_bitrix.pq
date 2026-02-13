@@ -5,7 +5,7 @@
 //             preservando ID, Parent task ID, datas e arquivo de origem.
 // ORIGEM DOS DADOS: Pasta de extrações Bitrix (arquivos GT_PP_ ou “Extração Bitrix”)
 // DESTINO: Tabela de histórico de tarefas/contatos
-// VERSÃO: Atualizado em 09/02/2026
+// VERSÃO: Atualizado em 13/02/2026
 // RESPONSÁVEL: Gabi (Postalis)
 // OBSERVAÇÕES IMPORTANTES:
 // - Mantém histórico desde 02/02/2026.
