@@ -19,8 +19,8 @@ Option Explicit
 ' REGRA ESPECIAL (START_DATE):
 ' - No dia START_DATE (02/02/2026) NÃO EXISTE comparativo (sem dia anterior).
 ' - Portanto, nesse dia grava SOMENTE: INICIO + RESUMO (Total) + FIM.
-' - Hotfix anti-duplicação + stamp por DataHoraExtracao + START_DATE sem comparativo
-' VERSÃO: Atualizado em 13/02/2026 
+'
+' VERSÃO: 13/02/2026 (hotfix anti-duplicação + stamp por DataHoraExtracao + START_DATE sem comparativo)
 ' RESPONSÁVEL: Gabi (Postalis)
 ' =====================================================================================
 
@@ -110,7 +110,7 @@ Private Sub BuildLog_FromHistorico_FillMissingDays()
     Dim dictDays As Object
     Set dictDays = BuildDaysWithExtractionDict(loHist, firstToProcess, maxHistDate)
 
-    ' ✅ OPÇÃO A: SEM baseline anterior ao START_DATE
+    ' ? OPÇÃO A: SEM baseline anterior ao START_DATE
     Dim prevSet As Object: Set prevSet = CreateObject("Scripting.Dictionary"): prevSet.CompareMode = vbTextCompare
     Dim everSeen As Object: Set everSeen = CreateObject("Scripting.Dictionary"): everSeen.CompareMode = vbTextCompare
 
@@ -145,7 +145,7 @@ Private Sub BuildLog_FromHistorico_FillMissingDays()
             LoadIdsForLastExtractionOfDay loHist, d, curSet, maxDT
             If maxDT = 0 Then GoTo ProximoDia
 
-            ' ✅ REGRA: START_DATE é o primeiro dia absoluto (sem comparativo)
+            ' ? REGRA: START_DATE é o primeiro dia absoluto (sem comparativo)
             If d = START_DATE Then
                 AppendLog loLog, maxDT, "INICIO", "", "Comparativo Histórico Bitrix: (primeiro dia) \ " & Format(d, "dd/mm/yyyy")
                 AppendLog loLog, maxDT, "RESUMO", "", "DataArquivo: " & Format(d, "dd/mm/yyyy") & "; Total no dia: " & curSet.Count
@@ -359,9 +359,9 @@ Private Function ParseMarcoDate(ByVal s As String) As Date
     On Error GoTo Fim
     Dim p As Long: p = InStr(1, s, "=", vbTextCompare)
     If p = 0 Then GoTo Fim
-    Dim v As String: v = Trim$(Mid$(s, p + 1))
+    Dim v As String: v = Trim$(mid$(s, p + 1))
     If Len(v) >= 10 Then
-        ParseMarcoDate = DateSerial(CInt(Mid$(v, 1, 4)), CInt(Mid$(v, 6, 2)), CInt(Mid$(v, 9, 2)))
+        ParseMarcoDate = DateSerial(CInt(mid$(v, 1, 4)), CInt(mid$(v, 6, 2)), CInt(mid$(v, 9, 2)))
         Exit Function
     End If
 Fim:
@@ -398,13 +398,13 @@ Private Function ParseDataArquivoFromObs(ByVal obs As String) As Date
     Dim p As Long: p = InStr(1, obs, "DataArquivo:", vbTextCompare)
     If p = 0 Then GoTo Fim
 
-    Dim s As String: s = Trim$(Mid$(obs, p + Len("DataArquivo:")))
+    Dim s As String: s = Trim$(mid$(obs, p + Len("DataArquivo:")))
     If Len(s) < 10 Then GoTo Fim
 
     Dim dd As Integer, mm As Integer, yy As Integer
-    dd = CInt(Mid$(s, 1, 2))
-    mm = CInt(Mid$(s, 4, 2))
-    yy = CInt(Mid$(s, 7, 4))
+    dd = CInt(mid$(s, 1, 2))
+    mm = CInt(mid$(s, 4, 2))
+    yy = CInt(mid$(s, 7, 4))
 
     ParseDataArquivoFromObs = DateSerial(yy, mm, dd)
     Exit Function
