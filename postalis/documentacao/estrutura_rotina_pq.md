@@ -92,41 +92,53 @@ Camada de extração automática de informações textuais a partir da base trat
 
 ### Histórico_Bitrix - VERSÃO: Atualizado em 12/02/2026
 
-Consulta responsável por consolidar o histórico diário das extrações do Bitrix, garantindo correspondência entre cada arquivo extraído e o respectivo dia, e habilitando a regra “última extração do dia” via campo DataHoraExtracao (DateTime).
+Consulta responsável por consolidar o histórico diário das extrações do Bitrix, garantindo correspondência exata entre cada arquivo de extração e o respectivo dia.
 
-**Principais responsabilidades:**
+**🔎 Principais responsabilidades:**
 
-• Ler arquivos de extração Bitrix a partir de pasta local configurada.
-• Considerar apenas arquivos Excel válidos (.xlsx, .xls, .xlsm) e ignorar ~$.
-• Priorizar arquivos iniciados com GT_PP_ (fallback para “Extração Bitrix” se não existir GT_PP_).
-• Criar e manter:
-  - NomeArquivo (nome do arquivo de origem)
-  - DataArquivo (data do dia da extração – tipo date)
-  - DataHoraExtracao (data+hora da extração – tipo datetime, derivada do NomeArquivo)
-• Para cada dia (DataArquivo), manter apenas o arquivo mais recente do dia com base em DataHoraExtracao (regra “última extração do dia”).
-• Identificar dinamicamente a aba/tabela que contém a coluna ID (não depende de “Sheet1”).
-• Normalizar/padronizar colunas principais e garantir colunas ausentes como null.
-• Consolidar histórico diário por ID, mantendo consistência por dia.
+- Ler arquivos Excel válidos (.xlsx, .xls, .xlsm) na pasta configurada
+- Ignorar arquivos temporários (~$)
+- Priorizar arquivos iniciados com GT_PP_
+- Selecionar automaticamente um único arquivo por dia, definido por:
+   DataArquivo (Date modified convertido para date)
+   Ordenação por Date modified (mais recente do dia)
+- Identificar dinamicamente a aba ou tabela que contenha a coluna ID
+- Padronizar nomes e tipos de colunas obrigatórias
+- Garantir integridade das colunas contratuais
+- Consolidar histórico mantendo 1 linha por ID por DataArquivo
 
-**Regra oficial para múltiplas extrações no mesmo dia:**
+**⏱ Controle de Extração (Novo – 13/02/2026):**
 
-Quando houver mais de uma extração no mesmo dia,
-a consulta mantém todas as linhas no histórico,
-porém a coluna DataHoraExtracao (DateTime real)
-permite que o VBA considere apenas a ÚLTIMA extração do dia
-para cálculo de movimentações.
+Para garantir a regra “última extração do dia”, a consulta agora:
+- Extrai a informação de horário diretamente do NomeArquivo (ex: 06h16min)
+- Cria as colunas auxiliares:
+   ParteHora
+   HoraNum
+  MinutoNum
+- Cria a coluna oficial:
+   DataHoraExtracao (datetime real)
+- Essa coluna é utilizada pelo VBA (modExecucao) para:
+   Identificar a última extração do dia
+   Construir o log histórico corretamente
+   Permitir futura auditoria de múltiplas extrações no mesmo dia
+Se o padrão do nome do arquivo for alterado, essa lógica deve ser revisada.
 
-**Origem dos dados:**
+**📥 Origem dos dados:**
 
-• Pasta local contendo os arquivos Excel de remoção do Bitrix
-• Caminho configurado diretamente na consulta Power Query
+- Pasta local configurada diretamente na consulta (Folder.Contents)
+- Não varre subpastas
 
-**Tipo de carregamento:**
+**📤 Tipo de carregamento:**
 
-• Carrega em planilha (tabela tblHistoricoBitrix)
-• Aba mantida oculta, utilizada como base oficial do log histórico
+- Carrega em planilha
+- Tabela: tblHistoricoBitrix
+- Aba: Histórico Bitrix
+- Utilizada como base para:
+   Registros_Contatos_Auto
+   Registros_Contatos_Final
+   Construção do Log_Sincronizacao
 
-**Colunas entregues (contrato):**
+**📦 Colunas entregues (contrato):**
 
 ID
 Parent task ID
@@ -138,26 +150,20 @@ Modified on
 Task
 Description
 NomeArquivo
-DataArquivo (date)
-DataHoraExtracao (datetime)
-(colunas auxiliares, se mantidas) ParteHora / HoraNum / MinutoNum
+DataArquivo
+ParteHora
+HoraNum
+MinutoNum
+DataHoraExtracao
 
-Caso alguma coluna não exista na origem, ela é criada com valores nulos.
+Caso alguma coluna obrigatória não exista na origem, é criada com valores nulos.
 
-**Observações técnicas:**
+**🛡 Observações técnicas:**
 
-• A coluna DataHoraExtracao é derivada do NomeArquivo e contém data + hora real da extração.
-• Esta coluna é utilizada pelo VBA para:
-   - Identificar a última extração diária
-   - Calcular corretamente ENTROU / SAIU / RETORNOU
-   - Reconstruir backlog de dias não executados
-• A comparação diária não depende mais apenas da DataArquivo.
-
-**Esta consulta serve como base para:**
-
-• Registros_Contatos_Auto
-• Registros_Contatos_Final
-• Log_Sincronizacao (via VBA - modExecucao)
+- Mantém histórico desde 02/02/2026
+- Para cada DataArquivo mantém apenas o arquivo mais recente do dia
+- A regra “última extração do dia” é baseada na DataHoraExtracao (datetime real)
+- Compatível com múltiplas extrações no mesmo dia
 
 ---
 
