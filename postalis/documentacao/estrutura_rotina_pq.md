@@ -90,49 +90,73 @@ Camada de extração automática de informações textuais a partir da base trat
   
 ---
 
-### Histórico_Bitrix - VERSÃO: Atualizado em 09/02/2026
+Histórico_Bitrix - VERSÃO: Atualizado em 12/02/2026
 
-Consulta responsável por consolidar o histórico diário das extrações do Bitrix, garantindo correspondência exata entre cada arquivo de extração e o respectivo dia.
+Consulta responsável por consolidar o histórico diário das extrações do Bitrix,
+garantindo rastreabilidade completa por ID e controle correto de movimentações
+(ENTROU / SAIU / RETORNOU) no log de sincronização.
 
-**Principais responsabilidades:**
-- Ler os arquivos de extração Bitrix a partir de pasta local configurada
-- Considerar apenas arquivos Excel válidos (`.xlsx`, `.xls`, `.xlsm`)
-- Priorizar arquivos iniciados com `GT_PP_`
-- Selecionar automaticamente **um único arquivo por dia**, definido pelo campo *Data de modificação*
-- Identificar dinamicamente a aba ou tabela que contém a coluna **ID**
-- Normalizar e padronizar as principais colunas
-- Adicionar os campos **NomeArquivo** e **DataArquivo**
-- Consolidar histórico diário por ID, mantendo uma linha por ID por data
+Principais responsabilidades:
 
-**Origem dos dados:**
-- Pasta local contendo os arquivos Excel de extração do Bitrix
-- Caminho configurado diretamente na consulta Power Query
+• Ler os arquivos de remoção do Bitrix a partir da pasta local configurada
+• Considerar apenas arquivos Excel válidos (.xlsx, .xls, .xlsm)
+• Priorizar arquivos iniciados com GT_PP_
+• Selecionar automaticamente um único arquivo por dia
+• Identificar dinamicamente a aba ou tabela que contém a coluna ID
+• Normalizar e padronizar as principais colunas
+• Adicionar os campos NomeArquivo, DataArquivo e DataHoraExtracao
+• Consolidar histórico diário por ID, mantendo uma linha por ID por dia
 
-**Tipo de carregamento:**
-- Carrega em planilha (tabela `tblHistoricoBitrix`)
-- Aba mantida oculta, utilizada para auditoria e validações pontuais
+Regra oficial para múltiplas extrações no mesmo dia:
 
-**Colunas entregues (contrato):**
-- ID  
-- Parent task ID  
-- Estágio  
-- Tags  
-- Status  
-- Created on  
-- Modified on  
-- Task  
-- Description  
-- NomeArquivo  
-- DataArquivo  
+Quando houver mais de uma extração no mesmo dia,
+a consulta mantém todas as linhas no histórico,
+porém a coluna DataHoraExtracao (DateTime real)
+permite que o VBA considere apenas a ÚLTIMA extração do dia
+para cálculo de movimentações.
 
-> Caso alguma coluna não exista na origem, ela é criada com valores nulos.
+Origem dos dados:
 
-**Observações técnicas:**
-- O arquivo considerado por dia é definido pelo campo **Date modified**
-- O histórico mantém consistência 1:1 entre extração diária e registros carregados
-- Esta consulta serve como base para:
-  - Registros_Contatos_Auto
-  - Registros_Contatos_Final
+• Pasta local contendo os arquivos Excel de remoção do Bitrix
+• Caminho configurado diretamente na consulta Power Query
+
+Tipo de carregamento:
+
+• Carrega em planilha (tabela tblHistoricoBitrix)
+• Aba mantida oculta, utilizada como base oficial do log histórico
+
+Colunas entregues (contrato):
+
+EU IA
+ID
+ID da tarefa principal
+Estágio
+Etiquetas
+Status
+Criado em
+Modificado em
+Tarefa
+Descrição
+NomeArquivo
+DataArquivo
+DataHoraExtracao  ← (DateTime oficial da extração)
+
+Caso alguma coluna não exista na origem, ela é criada com valores nulos.
+
+Observações técnicas:
+
+• A coluna DataHoraExtracao é derivada do NomeArquivo e contém data + hora real da extração.
+• Esta coluna é utilizada pelo VBA para:
+   - Identificar a última extração diária
+   - Calcular corretamente ENTROU / SAIU / RETORNOU
+   - Reconstruir backlog de dias não executados
+• A comparação diária não depende mais apenas da DataArquivo.
+
+Esta consulta serve como base para:
+
+• Registros_Contatos_Auto
+• Registros_Contatos_Final
+• Log_Sincronizacao (via VBA - modExecucao)
 
 ---
 
