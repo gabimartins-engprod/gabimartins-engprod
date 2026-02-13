@@ -115,4 +115,40 @@ Executa a sequência: (1) RefreshAll do Power Query, (2) rotina interna de sincr
 
 ---
 
+### modPQPowerQuery – Atualizado em 13/02/2026
 
+**Finalidade:** Ajustar o comportamento de atualização das tabelas conectadas ao Power Query, desativando o refresh em segundo plano (background), para garantir execução síncrona e encadeamento correto com as rotinas VBA.
+
+### Resumo rápido
+Percorre todas as planilhas do arquivo Rotina_Dados, identifica ListObjects que possuem QueryTable associada ao Power Query e desativa BackgroundQuery, forçando atualização síncrona.
+Também define RefreshStyle = xlInsertDeleteCells para manter consistência estrutural ao atualizar as tabelas.
+
+### Inclui ainda:
+- HookPQTables (reservado para futura expansão, atualmente vazio)
+- ReHookPQ (reexecuta hook e exibe mensagem informativa)
+
+### Tipo de carga
+**Manual:** pode ser executado diretamente
+**Automática (indireta):** chamado por ThisWorkbook.Workbook_Open
+
+### Entradas (lê/usa)
+- Todas as planilhas do ThisWorkbook
+- ListObjects que possuam QueryTable
+
+### Propriedades:
+- BackgroundQuery
+- RefreshStyle
+
+### Saídas (escreve/impacta)
+- Define BackgroundQuery = False
+- Define RefreshStyle = xlInsertDeleteCells
+- Garante execução síncrona das consultas carregadas em planilhas
+
+### Dependências
+- Chamado por ThisWorkbook.Workbook_Open
+- Utilizado antes da rotina principal (modExecucao)
+
+### Observações de portabilidade
+- Atua apenas sobre tabelas carregadas em planilha (ListObjects com QueryTable).
+- Consultas carregadas exclusivamente no Modelo de Dados não são afetadas.
+- O procedimento usa On Error Resume Next para evitar interrupção da abertura caso alguma tabela não possua QueryTable.
