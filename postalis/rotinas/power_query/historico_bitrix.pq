@@ -4,21 +4,21 @@
 // FINALIDADE: Montar histórico consolidado das extrações Bitrix encontradas na pasta,
 //             preservando ID, Parent task ID, datas e arquivo de origem.
 // ORIGEM DOS DADOS: Pasta de extrações Bitrix (arquivos GT_PP_ ou “Extração Bitrix”)
-// DESTINO: Tabela de histórico de tarefas/contatos (tblHistoricoBitrix)
-// VERSÃO: Atualizado em 12/02/2026
+// DESTINO: Tabela de histórico de tarefas/contatos
+// VERSÃO: Atualizado em 09/02/2026
 // RESPONSÁVEL: Gabi (Postalis)
 // OBSERVAÇÕES IMPORTANTES:
 // - Mantém histórico desde 02/02/2026.
 // - Lê SOMENTE a pasta definida (Folder.Contents) — não varre subpastas.
-// - Regra oficial: para cada dia (DataArquivo), mantém APENAS a ÚLTIMA extração do dia,
-//   definida pela coluna DataHoraExtracao (DateTime real derivado do NomeArquivo).
+// - Para cada dia (DataArquivo), mantém APENAS o arquivo mais recente (Date modified).
 // - NÃO trava em "Sheet1": seleciona automaticamente a aba/tabela que contém a coluna ID.
+// - Colunas extração (visíveis): ParteHora, HoraNum, MinutoNum, DataHoraExtracao.
 // =====================================================================================
 let
     ColsObrigatorias = {
         "ID","Parent task ID","Estágio","Tags","Status",
         "Created on","Modified on","Task","Description",
-        "NomeArquivo","DataArquivo","DataHoraExtracao"
+        "NomeArquivo","DataArquivo"
     },
 
     // ✅ PASTA CORRETA (onde estão os GT_PP_...)
@@ -43,7 +43,7 @@ let
         then Table.SelectRows(SoExcel, each Text.StartsWith([Name], "Extração Bitrix"))
         else GTpp,
 
-    // 3) DataArquivo (dia) = Date modified (data do dia) — mantém coerência com a pasta
+    // 3) DataArquivo (dia) = Date modified
     AddDataArquivo =
         Table.AddColumn(
             FonteArquivosBruta,
@@ -59,69 +59,11 @@ let
             each [DataArquivo] <> null and [DataArquivo] >= #date(2026, 2, 2)
         ),
 
-    // 5) Derivar DataHoraExtracao (DateTime real) a partir do NomeArquivo: ..._06h16min.xlsx
-    AddParteHora =
-        Table.AddColumn(
-            Desde0202,
-            "ParteHora",
-            each
-                let
-                    base = Text.BeforeDelimiter([Name], ".xlsx"),
-                    last = List.Last(Text.Split(base, "_"))
-                in
-                    last,
-            type text
-        ),
-
-    AddHoraNum =
-        Table.AddColumn(
-            AddParteHora,
-            "HoraNum",
-            each
-                let
-                    s = [ParteHora],
-                    hTxt = Text.BeforeDelimiter(s, "h"),
-                    hNum = try Number.FromText(hTxt) otherwise null
-                in
-                    hNum,
-            Int64.Type
-        ),
-
-    AddMinutoNum =
-        Table.AddColumn(
-            AddHoraNum,
-            "MinutoNum",
-            each
-                let
-                    s = [ParteHora],
-                    mTxt = Text.BetweenDelimiters(s, "h", "min"),
-                    mNum = try Number.FromText(mTxt) otherwise null
-                in
-                    mNum,
-            Int64.Type
-        ),
-
-    AddDataHoraExtracao =
-        Table.AddColumn(
-            AddMinutoNum,
-            "DataHoraExtracao",
-            each
-                let
-                    d = [DataArquivo],
-                    h = [HoraNum],
-                    m = [MinutoNum]
-                in
-                    if d <> null and h <> null and m <> null
-                    then #datetime(Date.Year(d), Date.Month(d), Date.Day(d), h, m, 0)
-                    else null,
-            type datetime
-        ),
-
-    // 6) Um arquivo por dia (ÚLTIMA extração do dia = maior DataHoraExtracao)
+    // 5) Um arquivo por dia (mais recente)
     OrdenaArquivos =
         Table.Sort(
-            AddDataHoraExtracao,
-            {{"DataArquivo", Order.Ascending}, {"DataHoraExtracao", Order.Descending}, {"Name", Order.Descending}}
+            Desde0202,
+            {{"DataArquivo", Order.Ascending}, {"Date modified", Order.Descending}, {"Name", Order.Descending}}
         ),
 
     UmPorDia =
@@ -135,16 +77,16 @@ let
         Table.ExpandTableColumn(
             UmPorDia,
             "Top1",
-            {"Content","Name","Date modified","Extension","Attributes","Folder Path","DataHoraExtracao"},
-            {"Content","Name","Date modified","Extension","Attributes","Folder Path","DataHoraExtracao"}
+            {"Content","Name","Date modified","Extension","Attributes","Folder Path"},
+            {"Content","Name","Date modified","Extension","Attributes","Folder Path"}
         ),
 
-    // 7) Abre workbook
+    // 6) Abre workbook
     AbreWB = Table.AddColumn(FonteArquivos, "WB", each Excel.Workbook([Content], true)),
     ExpWB  = Table.ExpandTableColumn(AbreWB, "WB", {"Name","Data","Kind"}, {"SheetName","Data","Kind"}),
     SoPlan = Table.SelectRows(ExpWB, each [Kind] = "Sheet" or [Kind] = "Table"),
 
-    // 8) Seleciona automaticamente a aba/tabela que tem a coluna ID
+    // 7) Seleciona automaticamente a aba/tabela que tem a coluna ID
     TemID =
         Table.SelectRows(
             SoPlan,
@@ -161,10 +103,10 @@ let
         then error "Nenhuma aba/tabela com coluna ID foi encontrada nas extrações."
         else TemID,
 
-    // 9) Expande os dados usando as colunas do primeiro item válido
+    // 8) Expande os dados usando as colunas do primeiro item válido
     ExpDados = Table.ExpandTableColumn(_Valida, "Data", Table.ColumnNames(_Valida{0}[Data])),
 
-    // 10) Normaliza nome da coluna ID se veio como "Id" ou "ID " etc.
+    // 9) Normaliza nome da coluna ID se veio como "Id" ou "ID " etc.
     ColunasAtuais = Table.ColumnNames(ExpDados),
     ColunasNorm = List.Transform(ColunasAtuais, each Text.Upper(Text.Trim(_))),
     PosID = List.PositionOf(ColunasNorm, "ID"),
@@ -173,7 +115,7 @@ let
         then Table.RenameColumns(ExpDados, {{ColunasAtuais{PosID}, "ID"}}, MissingField.Ignore)
         else ExpDados,
 
-    // 11) Padroniza Estágio
+    // 10) Padroniza Estágio
     StdEstagio1 =
         if Table.HasColumns(Base, {"Stage"})
         then Table.RenameColumns(Base, {{"Stage","Estágio"}}, MissingField.Ignore)
@@ -184,24 +126,24 @@ let
         then StdEstagio1
         else Table.AddColumn(StdEstagio1, "Estágio", each null, type text),
 
-    // 12) NomeArquivo (origem)
+    // 11) NomeArquivo (origem)
     AddNome = Table.AddColumn(StdEstagio2, "NomeArquivo", each [Name], type text),
 
-    // 13) Remove meta desnecessária
-    MetaCols = {"Content","Extension","Date modified","Attributes","Folder Path","SheetName","Kind","Name","WB"},
+    // 12) Remove meta desnecessária
+    MetaCols = {"Content","Extension","Date modified","Attributes","Folder Path","SheetName","Kind","Name"},
     SemMeta =
         Table.RemoveColumns(
             AddNome,
             List.Intersect({MetaCols, Table.ColumnNames(AddNome)})
         ),
 
-    // 14) Garante Parent task ID
+    // 13) Garante Parent task ID
     GarantirParent =
         if Table.HasColumns(SemMeta, {"Parent task ID"})
         then SemMeta
         else Table.AddColumn(SemMeta, "Parent task ID", each null, type text),
 
-    // 15) Tipagem + seleção final
+    // 14) Tipagem + seleção final (contrato)
     Desejados = {
         {"ID", type text},
         {"Parent task ID", type text},
@@ -213,8 +155,7 @@ let
         {"Modified on", type datetime},
         {"Estágio", type text},
         {"NomeArquivo", type text},
-        {"DataArquivo", type date},
-        {"DataHoraExtracao", type datetime}
+        {"DataArquivo", type date}
     },
 
     NomesAtuais2 = Table.ColumnNames(GarantirParent),
@@ -224,8 +165,61 @@ let
     ColsExistentes = List.Intersect({ColsObrigatorias, Table.ColumnNames(Tipado)}),
     Saida          = Table.SelectColumns(Tipado, ColsExistentes, MissingField.Ignore),
 
-    // 16) Deduplica por (ID, DataArquivo) — mantém 1 linha por ID por dia (já na ÚLTIMA extração do dia)
+    // 15) Deduplica por (ID, DataArquivo)
     LinhasClassificadas = Table.Sort(Saida, {{"NomeArquivo", Order.Descending}}),
-    DuplicatasRemovidas = Table.Distinct(LinhasClassificadas, {"ID", "DataArquivo"})
+    DuplicatasRemovidas = Table.Distinct(LinhasClassificadas, {"ID", "DataArquivo"}),
+
+    // 16) Extrair ParteHora (último token do NomeArquivo antes de .xlsx)
+    AddParteHora =
+        Table.AddColumn(
+            DuplicatasRemovidas,
+            "ParteHora",
+            each
+                let
+                    base = try Text.BeforeDelimiter([NomeArquivo], ".xlsx") otherwise null,
+                    tok  = if base <> null then try List.Last(Text.Split(base, "_")) otherwise null else null
+                in
+                    tok,
+            type text
+        ),
+
+    // 17) HoraNum / MinutoNum (a partir de ParteHora, ex: 06h16min)
+    AddHoraNum =
+        Table.AddColumn(
+            AddParteHora,
+            "HoraNum",
+            each try Number.FromText(Text.BeforeDelimiter([ParteHora], "h")) otherwise null,
+            Int64.Type
+        ),
+
+    AddMinutoNum =
+        Table.AddColumn(
+            AddHoraNum,
+            "MinutoNum",
+            each try Number.FromText(Text.BeforeDelimiter(Text.AfterDelimiter([ParteHora], "h"), "min")) otherwise null,
+            Int64.Type
+        ),
+
+    // 18) DataHoraExtracao = DataArquivo + Hora/Minuto (DateTime real)
+    AddDataHoraExtracao =
+        Table.AddColumn(
+            AddMinutoNum,
+            "DataHoraExtracao",
+            each
+                try
+                    if [DataArquivo] <> null and [HoraNum] <> null and [MinutoNum] <> null
+                    then #datetime(Date.Year([DataArquivo]), Date.Month([DataArquivo]), Date.Day([DataArquivo]), [HoraNum], [MinutoNum], 0)
+                    else null
+                otherwise null,
+            type datetime
+        ),
+
+    // 19) Reordenação final (mantém as colunas novas VISÍVEIS)
+    ColunasFinal =
+        Table.ReorderColumns(
+            AddDataHoraExtracao,
+            {"ID","Parent task ID","Estágio","Tags","Status","Created on","Modified on","Task","Description","NomeArquivo","DataArquivo","ParteHora","HoraNum","MinutoNum","DataHoraExtracao"},
+            MissingField.Ignore
+        )
 in
-    DuplicatasRemovidas
+    ColunasFinal
