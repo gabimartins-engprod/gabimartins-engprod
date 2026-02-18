@@ -65,53 +65,58 @@ Executa a sequência: (1) RefreshAll do Power Query, (2) rotina interna de sincr
 
 ---
 
-## modSincronizarContatos - Atualizado em 12/02/2026
+## modSincronizarContatos - Atualizado em 18/02/2026
 
-**Finalidade:** Sincronizar a base oficial de contatos (`Registros_Contatos_Final`) com a extração (`Correção_Automática`) e manter uma tabela de histórico manual (`Registros_Contatos_Manual`) sem nunca apagar linhas.
+**Finalidade:**  
+Sincronizar a base `Registros_Contatos_Final` com a consulta `Correção_Automática`, controlando o ciclo dos IDs (Status, Data Entrada e Data Saída) e mantendo a base `Registros_Contatos_Manual` atualizada sem perder informações inseridas manualmente.
 
 ### Resumo rápido
-- **Parte 1:** Atualiza `Registros_Contatos_Final` conforme a extração `Correção_Automática`, inserindo novos IDs e atualizando `Status` e `Data Entrada/Data Saída` (carimbo do Excel).
-- **Parte 2:** Sincroniza `Registros_Contatos_Manual` com a base oficial, preservando 100% dos campos manuais já registrados (histórico manual nunca é apagado).
+Compara diariamente os IDs da extração atual (`Correção_Automática`) com a tabela `Registros_Contatos_Final`, executando:
+
+- Inclusão automática de novos IDs
+- Atualização do Status:
+  - "Dentro da extração"
+  - "Fora da extração"
+- Controle do ciclo:
+  - Data Entrada (primeira presença ou retorno)
+  - Data Saída (quando deixa de aparecer)
+- Sincronização da aba manual sem apagar histórico
+
+As datas são gravadas como **Date (sem hora)** para padronização e estabilidade em filtros, BI e análises.
 
 ### Tipo de carga
-- **Execução interna** (normalmente chamada pela rotina principal do botão via `modExecucao` / `Rotina_Sincronizar_E_Recalcular`)
+- Manual (executado via botão `AtualizarTudo_E_Sincronizar`)
+- Encadeado dentro da rotina principal (modExecucao)
 
 ### Entradas (lê/usa)
-- Tabela `Correção_Automática` (`TBL_EXT`)
-  - Colunas: `ID`, `Nome`, `Matrícula`
-- Tabela `Registros_Contatos_Final` (`TBL_CONT`)
-  - Colunas: `ID`, `Nome`, `Matrícula`, `Status`, `Data Entrada`, `Data Saída`
-  - Usadas também (para sincronizar manual): `Parent task ID`, `Created on`
-- Aba `Registros Contatos Manual` (`SH_MANUAL`)
-  - Tabela `Registros_Contatos_Manual` (`TBL_MANUAL`)
-  - Colunas obrigatórias: `ID`, `Parent task ID`, `Created on`, `Matrícula`, `Nome`
-  - Demais colunas são consideradas “campos manuais” e são preservadas por ID.
+- Tabela: `Correção_Automática`
+- Tabela: `Registros_Contatos_Final`
+- Tabela: `Registros_Contatos_Manual`
 
 ### Saídas (escreve/impacta)
-- `Registros_Contatos_Final`:
-  - Insere novos IDs com `Status = Dentro da extração`, `Data Entrada = Now`, `Data Saída` em branco
-  - Atualiza:
-    - Quando ID está na extração: `Status = Dentro`, garante `Data Entrada` preenchida, limpa `Data Saída`
-    - Quando ID sai da extração: `Status = Fora`, preenche `Data Saída = Now` (se ainda vazio)
-- `Registros_Contatos_Manual`:
-  - Garante que o ID exista (cria linha se necessário)
-  - Atualiza campos automáticos (ID/Parent/Created/Nome/Matrícula)
-  - Reaplica os campos manuais preservados (nunca apaga linhas)
 
-### Regras críticas
-- **Sem Log:** este módulo não registra linhas na `tblLogIDs` (log oficial é gerado apenas em `modExecucao`).
-- **Preservação do manual:** nenhum registro manual é apagado automaticamente.
-- **Carimbo temporal:** `Data Entrada` e `Data Saída` usam `Now` (timestamp do Excel), não `DataArquivo` do Bitrix.
+🔹 `Registros_Contatos_Final`
+- Status
+- Data Entrada (Date, sem hora)
+- Data Saída (Date, sem hora)
+- Inclusão de novos IDs
+
+🔹 `Registros_Contatos_Manual`
+- Atualiza colunas automáticas (ID, Nome, Matrícula, Parent task ID, Created on)
+- Preserva 100% das colunas manuais
 
 ### Dependências
-- Existência das tabelas com os nomes:
-  - `Correção_Automática`
-  - `Registros_Contatos_Final`
-  - `Registros_Contatos_Manual` (na aba `Registros Contatos Manual`)
+- `GetTableByName`
+- `EnsureListColumn`
+- `ReadCell`
+- `WriteCell`
+- `IsEmptyOrNull`
+- Chamado por `modExecucao`
 
 ### Observações de portabilidade
-- Nomes de tabelas e colunas devem ser idênticos aos definidos nas constantes.
-- As colunas `Parent task ID` e `Created on` devem existir na `Registros_Contatos_Final` para sincronização completa com o manual.
+- As colunas "Status", "Data Entrada" e "Data Saída" são garantidas via VBA, mesmo que sejam removidas manualmente.
+- Datas são gravadas usando `Date` (sem hora), evitando conflitos com filtros, agrupamentos e Power BI.
+- Este módulo não grava log histórico — o log oficial é gerado exclusivamente no `modExecucao`.
 
 ---
 
