@@ -13,7 +13,10 @@ Option Explicit
 '   - ESTE MÓDULO NÃO ESCREVE MAIS NENHUMA LINHA NA tblLogIDs.
 '   - O LOG OFICIAL (Histórico dia-a-dia) é gerado SOMENTE no modExecucao, via Histórico Bitrix.
 '
-' VERSÃO: 12/02/2026
+' PADRÃO DE DATA (IMPORTANTE):
+'   - Data Entrada / Data Saída gravadas como Date (sem hora).
+'
+' VERSÃO: 18/02/2026 (datas sem hora + formatação + manutenção do status)
 ' RESPONSÁVEL: Gabi (Postalis)
 ' =====================================================================================
 
@@ -26,12 +29,12 @@ Private Const COL_ID     As String = "ID"
 Private Const COL_NOME   As String = "Nome"
 Private Const COL_MAT    As String = "Matrícula"
 
-' Colunas adicionais na tabela de contatos
+' Colunas de ciclo (na Registros_Contatos_Final)
 Private Const COL_STATUS As String = "Status"
 Private Const COL_DTENT  As String = "Data Entrada"
 Private Const COL_DTSAI  As String = "Data Saída"
 
-' Valores de status
+' Valores de status (PADRÃO OFICIAL)
 Private Const ST_DENTRO  As String = "Dentro da extração"
 Private Const ST_FORA    As String = "Fora da extração"
 
@@ -62,6 +65,9 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
     Dim curStatus As String
     Dim dtEnt As Variant
     Dim dtSai As Variant
+    Dim hoje As Date
+
+    hoje = Date ' <<< sem hora
 
     Set loExt = GetTableByName(TBL_EXT)
     Set loCont = GetTableByName(TBL_CONT)
@@ -71,12 +77,12 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
         GoTo Fim
     End If
 
-    ' Garante colunas de trabalho no Registros Contatos
+    ' Garante colunas de ciclo
     EnsureListColumn loCont, COL_STATUS
     EnsureListColumn loCont, COL_DTENT
     EnsureListColumn loCont, COL_DTSAI
 
-    ' Indexa IDs da extração
+    ' Indexa IDs da extração (ID -> [Nome, Matrícula])
     Set idxExt = CreateObject("Scripting.Dictionary")
     idxExt.CompareMode = vbTextCompare
 
@@ -91,7 +97,7 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
         Next row
     End If
 
-    ' Indexa linhas existentes na tabela de contatos por ID
+    ' Indexa IDs existentes na tabela de contatos (ID -> linha)
     Set idxCont = CreateObject("Scripting.Dictionary")
     idxCont.CompareMode = vbTextCompare
 
@@ -104,7 +110,7 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
         Next row
     End If
 
-    ' 1) Incluir IDs novos que estão na extração mas não existem em Registros Contatos
+    ' (1) Incluir IDs novos (presentes na extração e ausentes na tabela final)
     For Each k In idxExt.Keys
         If Not idxCont.Exists(CStr(k)) Then
             Dim lr As ListRow
@@ -115,12 +121,12 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
             WriteCell loCont, iRow, COL_NOME, idxExt(k)(0)
             WriteCell loCont, iRow, COL_MAT, idxExt(k)(1)
             WriteCell loCont, iRow, COL_STATUS, ST_DENTRO
-            WriteCell loCont, iRow, COL_DTENT, Now
+            WriteCell loCont, iRow, COL_DTENT, hoje
             WriteCell loCont, iRow, COL_DTSAI, vbNullString
         End If
     Next k
 
-    ' Reindexa depois de incluir novas linhas
+    ' Reindexa (depois de incluir)
     Set idxCont = CreateObject("Scripting.Dictionary")
     idxCont.CompareMode = vbTextCompare
     If Not loCont.DataBodyRange Is Nothing Then
@@ -132,7 +138,7 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
         Next row
     End If
 
-    ' 2) Atualizar Status, Data Entrada/Saída, Nome/Matrícula
+    ' (2) Atualizar Status / Datas / completar Nome e Matrícula quando vazios
     For Each k In idxCont.Keys
         iRow = idxCont(k)
 
@@ -146,18 +152,32 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
         dtSai = ReadCell(loCont, iRow, COL_DTSAI)
 
         If idxExt.Exists(k) Then
+            ' Está na extração hoje
             If StrComp(curStatus, ST_DENTRO, vbTextCompare) <> 0 Then
                 WriteCell loCont, iRow, COL_STATUS, ST_DENTRO
-                If IsEmptyOrNull(dtEnt) Then WriteCell loCont, iRow, COL_DTENT, Now
+                If IsEmptyOrNull(dtEnt) Then WriteCell loCont, iRow, COL_DTENT, hoje
                 If Not IsEmptyOrNull(dtSai) Then WriteCell loCont, iRow, COL_DTSAI, vbNullString
+            Else
+                ' Já está DENTRO: garante que Data Entrada exista (se alguém apagou)
+                If IsEmptyOrNull(dtEnt) Then WriteCell loCont, iRow, COL_DTENT, hoje
             End If
         Else
+            ' Não está na extração hoje
             If StrComp(curStatus, ST_FORA, vbTextCompare) <> 0 Then
                 WriteCell loCont, iRow, COL_STATUS, ST_FORA
-                If IsEmptyOrNull(dtSai) Then WriteCell loCont, iRow, COL_DTSAI, Now
+                If IsEmptyOrNull(dtSai) Then WriteCell loCont, iRow, COL_DTSAI, hoje
+            Else
+                ' Já está FORA: garante Data Saída (se alguém apagou)
+                If IsEmptyOrNull(dtSai) Then WriteCell loCont, iRow, COL_DTSAI, hoje
             End If
         End If
     Next k
+
+    ' Formatar datas (sem hora)
+    On Error Resume Next
+    loCont.ListColumns(COL_DTENT).DataBodyRange.NumberFormat = "dd/mm/yyyy"
+    loCont.ListColumns(COL_DTSAI).DataBodyRange.NumberFormat = "dd/mm/yyyy"
+    On Error GoTo 0
 
 Fim:
     Application.Calculation = xlCalculationAutomatic
