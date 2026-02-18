@@ -122,14 +122,16 @@ As datas são gravadas como **Date (sem hora)** para padronização e estabilida
 
 ## modPQPowerQuery - Atualizado em 13/02/2026
 
-**Finalidade:** Ajustar o comportamento de atualização das tabelas conectadas ao Power Query, desativando a atualização em segundo plano (background), para garantir execução síncrona e encadeamento correto com as rotinas VBA.
+**Finalidade:** Garantir que o refresh do Power Query não rode em segundo plano (background), permitindo execução síncrona e previsível da rotina principal (RefreshAll + CalculateUntilAsyncQueriesDone) antes das etapas de VBA.
 
 ### Resumo rápido
-Percorre todas as planilhas do arquivo `Rotina_Dados`, identifica `ListObjects` que possuem `QueryTable` associado ao Power Query e desativa `BackgroundQuery`, forçando atualização síncrona. Também define `RefreshStyle = xlInsertDeleteCells` para manter consistência estrutural ao atualizar as tabelas.
+Executa `PQ_BackgroundOff` para desativar refresh em background:
+1) Nas tabelas carregadas em planilha (`ListObject` com `QueryTable`), define `BackgroundQuery = False` e `RefreshStyle = xlInsertDeleteCells`.
+2) Nas conexões do arquivo (quando suportam `OLEDBConnection`), tenta definir `BackgroundQuery = False`.
 
 Inclui ainda:
-- `HookPQTables` (reservado para expansão futura; atualmente vazio)
-- `ReHookPQ` (reexecuta o hook e exibe mensagem informativa)
+- `HookPQTables` (compatibilidade / reservado; atualmente vazio)
+- `ReHookPQ` (executa o hook e exibe mensagem informativa)
 
 ### Tipo de carga
 - **Automática:** chamado por `ThisWorkbook.Workbook_Open`
@@ -137,21 +139,19 @@ Inclui ainda:
 
 ### Entradas (lê/usa)
 - Todas as planilhas do `ThisWorkbook`
-- `ListObjects` que **possuem** `QueryTable`
-- Propriedades do QueryTable:
-  - `BackgroundQuery`
-  - `RefreshStyle`
+- `ListObjects` e suas propriedades (`QueryTable`, quando existir)
+- `ThisWorkbook.Connections` (conexões do arquivo) e `OLEDBConnection` (quando existir)
 
 ### Saídas (escreve/impacta)
-- Define `BackgroundQuery = False`
-- Define `RefreshStyle = xlInsertDeleteCells`
-- Garante atualização síncrona das tabelas carregadas via Power Query (evita refresh assíncrono)
+- Define `QueryTable.BackgroundQuery = False` (quando aplicável)
+- Define `QueryTable.RefreshStyle = xlInsertDeleteCells` (quando aplicável)
+- Define `OLEDBConnection.BackgroundQuery = False` (quando aplicável)
+- Reduz risco de comportamento assíncrono durante a execução do botão principal
 
 ### Dependências
 - Chamado por `ThisWorkbook.Workbook_Open`
-- Executado antes da rotina principal (botão em `modExecucao`)
 
 ### Observações de portabilidade
-- Atua apenas sobre tabelas em planilhas (ListObjects com `QueryTable`).
-- Consultas “somente conexão” e itens carregados apenas no Modelo de Dados não são afetados.
-- Usa `On Error Resume Next` para evitar interrupção na abertura caso alguma tabela não possua `QueryTable`.
+- Atua somente onde há `QueryTable` (tabelas carregadas na planilha). Se a consulta não estiver carregada como tabela, pode não ser afetada.
+- A etapa de conexões depende do tipo de conexão: só aplica quando existir `OLEDBConnection`.
+- Em caso de erro, o procedimento exibe mensagem (`MsgBox`) mas não deve impedir a abertura do arquivo.
