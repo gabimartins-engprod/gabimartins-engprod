@@ -23,7 +23,8 @@ dos processos envolvidos.
 postalis/
 │
 ├─ documentação/
-│  └─ estrutura_rotina.md
+│  └─ estrutura_rotina_pq.md
+│  └─ estrutura_rotina_vba.md
 │
 ├─ rotina/
 │  ├─ power_query/
