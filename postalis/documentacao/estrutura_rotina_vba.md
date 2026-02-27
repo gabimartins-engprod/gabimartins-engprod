@@ -1,8 +1,8 @@
-### Estrutura de Rotina — VBA (Rotina_Dados – Postalis) ###
+# Estrutura de Rotina — VBA (Rotina_Dados – Postalis)
 
 Documento criado para organizar a lógica geral do VBA da rotina administrativa Rotina_Dados – Postalis, descrevendo responsabilidades, dependências e sequência de execução, sem uso de dados reais.
 
-### Objetivo ###
+## Objetivo
 
 Documentar a arquitetura do fluxo VBA, deixando claro:
 
@@ -14,7 +14,7 @@ como eles se conectam ao Power Query e às tabelas;
 
 como o botão único executa a rotina ponta a ponta.
 
-### Etapas gerais (fluxo VBA) ###
+## Etapas gerais (fluxo VBA)
 
 Abertura do arquivo
 
@@ -34,7 +34,7 @@ Recalcular e atualizar pivôs
 
 Finalização
 
-Observações
+## Observações
 
 Documento de caráter organizacional e técnico.
 
@@ -42,37 +42,41 @@ A rotina principal é manual via botão AtualizarTudo_E_Sincronizar (módulo mod
 
 A lógica diária de comparação é baseada em DataArquivo (date) como “dia oficial” e DataHoraExtracao (datetime) apenas para selecionar a última extração do dia, quando disponível.
 
-ThisWorkbook (EstaPastaDeTrabalho) — VERSÃO: 13/02/2026
+ ---
+
+### ThisWorkbook (EstaPastaDeTrabalho) — VERSÃO: 13/02/2026
 
 Módulo de evento do Excel, responsável por preparar o ambiente quando o arquivo é aberto.
 
-Finalidade
+#### Finalidade
 
 Garantir previsibilidade na execução do fluxo VBA, chamando a rotina que desativa execução em background das consultas do Power Query.
 
-Responsabilidades principais
+#### Responsabilidades principais
 
 Executar automaticamente ao abrir o arquivo (Workbook_Open)
 
 Chamar PQ_BackgroundOff para desligar refresh em background
 
-Dependências
+#### Dependências
 
 modPQPowerQuery.PQ_BackgroundOff
 
-Tipo de execução
+#### Tipo de execução
 
 Automática (evento do Excel)
 
-Observações técnicas
+#### Observações técnicas
 
 Usa On Error Resume Next para não impedir a abertura do arquivo caso haja alguma divergência/erro.
 
-modPQPowerQuery — VERSÃO: 23/02/2026
+ ---
+
+# modPQPowerQuery — VERSÃO: 23/02/2026
 
 Módulo responsável por forçar o Power Query a não rodar em background, permitindo que o VBA controle o encadeamento de atualizações.
 
-Finalidade
+#### Finalidade
 
 Evitar execução assíncrona do Power Query, garantindo que o VBA consiga fazer:
 
@@ -81,7 +85,7 @@ RefreshAll
 CalculateUntilAsyncQueriesDone
 com consistência.
 
-Responsabilidades principais
+#### Responsabilidades principais
 
 Percorrer todas as abas e ListObjects
 
@@ -97,23 +101,25 @@ OLEDBConnection.BackgroundQuery = False
 
 ODBCConnection.BackgroundQuery = False
 
-Origem/entrada
+#### Origem/entrada
 
 Estruturas do Excel (ListObjects, QueryTables e Connections)
 
-Tipo de execução
+#### Tipo de execução
 
 Preparação técnica (configuração do ambiente)
 
-Observações técnicas
+#### Observações técnicas
 
 Tratamento de erro com Debug.Print para diagnóstico sem travar a rotina.
 
-modLayoutPadrao — VERSÃO: 23/02/2026
+ ---
+
+# modLayoutPadrao — VERSÃO: 23/02/2026
 
 Módulo de padronização visual e performance do layout, com AutoFit leve.
 
-Finalidade
+#### Finalidade
 
 Aplicar layout padronizado nas abas principais sem o custo do AutoFit completo na planilha inteira.
 
@@ -125,7 +131,7 @@ Registros Contatos
 
 Registros Contatos Manual
 
-Responsabilidades principais
+#### Responsabilidades principais
 
 Ajustar altura de linhas:
 
@@ -137,7 +143,7 @@ Linhas 3 até o final: altura padrão
 
 Aplicar AutoFit apenas nas colunas das tabelas, usando amostra de linhas
 
-Controle de performance
+#### Controle de performance
 
 AutoFit roda uma vez por dia, salvo execução forçada
 
@@ -145,29 +151,31 @@ Usa o Name do workbook:
 
 RD_LastAutoFitDate
 
-Tipo de execução
+#### Tipo de execução
 
 Ajuste visual pós-processamento (layout)
 
-Observações técnicas
+#### Observações técnicas
 
 AutoFitListObject_Sample: pega Header + N primeiras linhas (amostragem) e faz AutoFit apenas nessas colunas.
 
-modAplicarFormulasPendencias — VERSÃO: 25/02/2026
+ ---
+
+# modAplicarFormulasPendencias — VERSÃO: 25/02/2026
 
 Módulo responsável por aplicar fórmulas (PROCX/LET) na tabela Correção_Automática, espelhando informações preenchidas manualmente na tabela final.
 
-Finalidade
+#### Finalidade
 
 Garantir que a base Correção_Automática carregue, via fórmula, os campos manuais existentes na Registros_Contatos_Final, centralizando o espelhamento.
 
-Tabelas envolvidas
+#### Tabelas envolvidas
 
 Destino: Correção_Automática
 
 Fonte: Registros_Contatos_Final
 
-Responsabilidades principais
+#### Responsabilidades principais
 
 Definir e manter mapa de colunas (COLS_MAP)
 
@@ -185,7 +193,7 @@ datas (ex.: dd/mmm/aa)
 
 e-mail e telefone como texto
 
-Otimização (TURBO)
+#### Otimização (TURBO)
 
 Só reescreve a fórmula quando:
 
@@ -193,7 +201,7 @@ a coluna é nova, ou
 
 a fórmula mudou (comparação normalizada)
 
-Integração com layout
+#### Integração com layout
 
 Wrapper Rotina_Sincronizar_E_Recalcular chama:
 
@@ -201,23 +209,25 @@ AplicarFormulasPendencias
 
 modLayoutPadrao.AplicarLayoutPadraoTabelas
 
-Observação (Opção A)
+#### Observação (Opção A)
 
 Este módulo não orquestra sincronizações (para evitar duplicidade)
 
 A orquestração fica centralizada no modExecucao
 
-modSincronizarContatos — VERSÃO: 25/02/2026
+---
+
+# modSincronizarContatos — VERSÃO: 25/02/2026
 
 Módulo central de sincronização de registros, responsável por manter consistência entre a base automática, a base final e a base manual.
 
-Finalidade
+#### Finalidade
 
 Sincronizar Registros_Contatos_Final com Correção_Automática
 
 Manter e alimentar Registros_Contatos_Manual com IDs e datas operacionais
 
-Tabelas envolvidas
+#### Tabelas envolvidas
 
 Correção_Automática (base automática tratada)
 
@@ -227,7 +237,7 @@ Registros_Contatos_Manual (base persistente manual)
 
 Histórico: tblHistoricoBitrix (aba Histórico Bitrix)
 
-Conceitos e regras
+#### Conceitos e regras
 
 BASELINE conceitual: 01/02/2026
 
@@ -235,7 +245,7 @@ Backfill e ciclo percorrem somente dias com extração (baseados em DataArquivo)
 
 DataHoraExtracao é opcional e, quando existe, serve para selecionar “última foto do dia”
 
-Responsabilidades principais (por rotina)
+#### Responsabilidades principais (por rotina)
 
 (A) Sincronizar_AteX_RegistrosContatos
 
@@ -279,11 +289,11 @@ Limpa datas inválidas (dia sem extração)
 
 Calcula saída/retorno percorrendo apenas extrDates (dias com extração)
 
-Tipo de execução
+#### Tipo de execução
 
 Execução por etapas, chamada pelo modExecucao
 
-Observações técnicas
+#### Observações técnicas
 
 IDs são tratados como texto (NumberFormat = "@")
 
@@ -291,19 +301,21 @@ Usa Scripting.Dictionary para performance (sets e presença diária)
 
 Backfill é limitado a pendentes (mais leve e seguro).
 
-modExecucao — VERSÃO: 25/02/2026
+ ---
+
+# modExecucao — VERSÃO: 25/02/2026
 
 Módulo orquestrador do sistema (botão único), responsável por rodar a rotina completa com proteção anti-duplicidade.
 
-Finalidade
+#### Finalidade
 
 Executar o fluxo ponta a ponta: atualizar consultas, aplicar regras, sincronizar tabelas e gerar log histórico.
 
-Botão único
+#### Botão único
 
 AtualizarTudo_E_Sincronizar
 
-Etapas executadas (sequência)
+#### Etapas executadas (sequência)
 
 PQ_BackgroundOff (opcional)
 
@@ -323,7 +335,7 @@ Recalcular + FixTotalDia_IfExists
 
 Atualizar tabelas dinâmicas (RefreshAllPivots)
 
-Regras críticas do Log (Histórico)
+#### Regras críticas do Log (Histórico)
 
 Referência de “dia”: DataArquivo
 
@@ -347,23 +359,23 @@ Para dias sem extração:
 
 registra RESUMO com alerta para verificação
 
-Anti-duplicidade por clique (Run once por etapa)
+#### Anti-duplicidade por clique (Run once por etapa)
 
 Cache em dictionary gRanSteps
 
 Cada etapa roda no máximo uma vez por execução do botão
 
-Correção TotalDia
+#### Correção TotalDia
 
 FixTotalDia_IfExists preenche TotalDia somente nas linhas RESUMO
 
 Extrai “Total no dia: N” do texto de observação
 
-Tipo de execução
+#### Tipo de execução
 
 Execução manual (botão)
 
-Observações técnicas
+#### Observações técnicas
 
 Controla ScreenUpdating, EnableEvents, Calculation para performance
 
@@ -371,7 +383,7 @@ Garante retorno ao estado anterior ao finalizar, mesmo em erro
 
 Mantém marco de processamento (MARCO) para retomar de onde parou.
 
-Mapa rápido de dependências (VBA)
+# Mapa rápido de dependências (VBA)
 
 ThisWorkbook
 → modPQPowerQuery
