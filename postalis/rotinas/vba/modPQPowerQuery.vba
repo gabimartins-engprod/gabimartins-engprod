@@ -4,28 +4,42 @@ Option Explicit
 ' MÓDULO: modPQPowerQuery
 ' SISTEMA: Rotina_Dados – Postalis
 ' FINALIDADE:
-'   Ajustar o comportamento de refresh do Power Query para NÃO rodar em background,
-'   permitindo sincronização encadeada com VBA (RefreshAll + CalculateUntilAsyncQueriesDone).
+'   Garantir que as consultas do Power Query NÃO sejam atualizadas em background,
+'   permitindo que o VBA controle o refresh de forma encadeada e previsível
+'   (RefreshAll + CalculateUntilAsyncQueriesDone no modExecucao).
 '
-' COMO FUNCIONA:
-'   (1) Força BackgroundQuery = False nas QueryTables (quando aplicável).
-'   (2) Tenta forçar BackgroundQuery = False também nas conexões OLEDB (quando existirem).
+' ORIGEM DOS DADOS:
+'   - ListObjects conectados a Power Query (QueryTable, quando aplicável)
+'   - Conexões do Workbook (OLEDBConnection / ODBCConnection, quando existirem)
+'
+' DESTINO:
+'   - Configurações de atualização (BackgroundQuery=False) aplicadas no próprio arquivo
+'
+' COMPORTAMENTO TÉCNICO:
+'   - Percorre todas as tabelas (ListObjects) e, quando houver QueryTable:
+'       * QueryTable.BackgroundQuery = False
+'       * QueryTable.RefreshStyle = xlInsertDeleteCells
+'   - Percorre todas as conexões do Workbook e tenta forçar BackgroundQuery=False
+'     em OLEDBConnection e ODBCConnection (quando disponíveis)
+'   - Erros são tratados com Debug.Print (não interrompe a rotina)
+'
+' MACROS PÚBLICAS:
+'   - PQ_BackgroundOff: aplica BackgroundQuery=False em tabelas e conexões
 '
 ' DEPENDÊNCIAS:
-'   - Chamado por ThisWorkbook.Workbook_Open
+'   - Chamado por: ThisWorkbook.Workbook_Open (EstaPastaDeTrabalho)
+'   - Usado por: modExecucao.AtualizarTudo_E_Sincronizar (etapa opcional)
 '
-' VERSÃO: 13/02/2026 (robustez + conexões + erro controlado)
+' VERSÃO: 23/02/2026
 ' RESPONSÁVEL: Gabi (Postalis)
 ' =====================================================================================
 
-' Desliga execução em 2º plano das consultas (sincroniza eventos de refresh)
 Public Sub PQ_BackgroundOff()
     On Error GoTo TrataErro
 
     Dim ws As Worksheet
     Dim lo As ListObject
 
-    ' 1) Tabelas carregadas em planilha (ListObject -> QueryTable)
     For Each ws In ThisWorkbook.Worksheets
         For Each lo In ws.ListObjects
             If Not lo Is Nothing Then
@@ -37,17 +51,13 @@ Public Sub PQ_BackgroundOff()
         Next lo
     Next ws
 
-    ' 2) Conexões (quando houver OLEDBConnection disponível)
     ForceConnectionsBackgroundOff
-
     Exit Sub
 
 TrataErro:
-    ' Sem travar a abertura do arquivo: apenas avisa (se quiser, pode comentar o MsgBox)
-    MsgBox "Erro em PQ_BackgroundOff: " & Err.Description, vbExclamation
+    Debug.Print "Erro em PQ_BackgroundOff: " & Err.Number & " - " & Err.Description
 End Sub
 
-' Verifica se o ListObject tem QueryTable sem estourar erro
 Private Function HasQueryTable(ByVal lo As ListObject) As Boolean
     On Error GoTo Falha
     HasQueryTable = Not (lo.QueryTable Is Nothing)
@@ -56,7 +66,6 @@ Falha:
     HasQueryTable = False
 End Function
 
-' Força BackgroundQuery = False nas conexões que suportam OLEDBConnection
 Private Sub ForceConnectionsBackgroundOff()
     On Error Resume Next
 
@@ -66,18 +75,11 @@ Private Sub ForceConnectionsBackgroundOff()
             If Not cn.OLEDBConnection Is Nothing Then
                 cn.OLEDBConnection.BackgroundQuery = False
             End If
+            If Not cn.ODBCConnection Is Nothing Then
+                cn.ODBCConnection.BackgroundQuery = False
+            End If
         End If
     Next cn
 
     On Error GoTo 0
-End Sub
-
-' Hook "falso" para manter compatibilidade com chamadas existentes
-Public Sub HookPQTables()
-    ' Intencionalmente vazio – reservado para implementação futura se necessário.
-End Sub
-
-Public Sub ReHookPQ()
-    HookPQTables
-    MsgBox "ReHook executado (modo simplificado).", vbInformation
 End Sub
