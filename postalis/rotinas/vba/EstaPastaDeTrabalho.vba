@@ -18,8 +18,6 @@ Option Explicit
 ' =====================================================================================
 
 Private Sub Workbook_Open()
-    On Error GoTo Saida
-    Application.EnableEvents = True
+    On Error Resume Next
     PQ_BackgroundOff
-Saida:
 End Sub
