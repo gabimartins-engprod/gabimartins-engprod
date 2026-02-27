@@ -72,7 +72,7 @@ Garantir previsibilidade na execução do fluxo VBA, chamando a rotina que desat
 
  ---
 
-# modPQPowerQuery — VERSÃO: 23/02/2026
+### modPQPowerQuery — VERSÃO: 23/02/2026
 
 Módulo responsável por **forçar o Power Query a não rodar em background**, permitindo que o VBA controle o encadeamento de atualizações.
 
@@ -115,7 +115,7 @@ com consistência.
 
  ---
 
-# modLayoutPadrao — VERSÃO: 23/02/2026
+### modLayoutPadrao — VERSÃO: 23/02/2026
 
 Módulo de padronização visual e performance do layout, com AutoFit leve.
 
@@ -161,7 +161,7 @@ Aplicar layout padronizado nas abas principais sem o custo do AutoFit completo n
 
  ---
 
-# modAplicarFormulasPendencias — VERSÃO: 25/02/2026
+### modAplicarFormulasPendencias — VERSÃO: 25/02/2026
 
 Módulo responsável por aplicar fórmulas (PROCX/LET) na tabela **Correção_Automática**, espelhando informações preenchidas manualmente na tabela final.
 
@@ -217,7 +217,7 @@ Garantir que a base **Correção_Automática carregue**, via fórmula, os campos
 
 ---
 
-# modSincronizarContatos — VERSÃO: 25/02/2026
+### modSincronizarContatos — VERSÃO: 25/02/2026
 
 Módulo central de sincronização de registros, responsável por manter consistência entre a base automática, a base final e a base manual.
 
@@ -303,7 +303,7 @@ Módulo central de sincronização de registros, responsável por manter consist
 
  ---
 
-# modExecucao — VERSÃO: 25/02/2026
+### modExecucao — VERSÃO: 25/02/2026
 
 Módulo orquestrador do sistema (botão único), responsável por rodar a rotina completa com proteção anti-duplicidade.
 
