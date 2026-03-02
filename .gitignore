@@ -16,9 +16,9 @@ postalis/dados_reais/
 # Arquivos Excel (evitar subir extrações reais)
 # =============================
 
-*.xlsx
-*.xlsm
-*.xls
+postalis/**/*.xlsx
+postalis/**/*.xlsm
+postalis/**/*.xls
 
 # ⚠️ Caso futuramente queira subir um Excel exemplo,
 # remova essa regra ou crie exceção específica.
