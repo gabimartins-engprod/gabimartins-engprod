@@ -207,3 +207,27 @@ O sistema Rotina_Dados funciona como:
 controle de estado por ciclo e reconciliação histórica baseada em extrações reais.
 
 Arquitetura modular e separada por responsabilidade.
+
+---
+
+## 🧭 Diagrama do Fluxo (Mermaid)
+
+flowchart TD
+  A[Extração Bitrix<br/>(Arquivos .xlsx)] --> B[Power Query (ETL)<br/>Limpeza • Padronização • Consolidação]
+  B --> C[Tabelas Estruturadas no Excel<br/>Histórico_Bitrix • Correção_Automática • Registros_Contatos_*]
+  C --> D[Macro Principal<br/>AtualizarTudo_E_Sincronizar<br/>(modExecucao)]
+  
+  D --> E[Controle de Execução<br/>isRunning • RunStepOnce • Ambiente Excel]
+  E --> F[Atualização PQ<br/>RefreshAll + CalculateUntilAsyncQueriesDone]
+  F --> G[Sincronização<br/>modSincronizarContatos]
+  G --> H[Aplicar Fórmulas<br/>modAplicarFormulasPendencias]
+  H --> I[Geração Log Histórico<br/>tblLogIDs<br/>ENTROU/SAIU/RETORNOU + RESUMO]
+  I --> J[Backfill (quando necessário)<br/>Manual_Backfill_*]
+  J --> K[Correções finais<br/>FixTotalDia (somente RESUMO)]
+  K --> L[Atualização de Pivôs<br/>Visualizações / Indicadores]
+
+  %% Regras estruturais
+  R1{{Regra: DataArquivo = dia oficial}} --- I
+  R2{{Regra: DataHoraExtracao<br/>apenas última extração do dia}} --- F
+  R3{{Regra: comparar apenas dias com extração}} --- I
+  R4{{Baseline conceitual<br/>01/02/2026}} --- I
