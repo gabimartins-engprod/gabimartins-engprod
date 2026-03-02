@@ -25,6 +25,7 @@ Documentar a macro principal responsável por orquestrar toda a execução da ro
 Localização: `modExecucao`
 
 ### Função
+
 Orquestrar toda a execução da rotina do arquivo a partir de um único botão.
 
 Fluxo controlado por:
