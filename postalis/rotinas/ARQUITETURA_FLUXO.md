@@ -212,6 +212,9 @@ Arquitetura modular e separada por responsabilidade.
 
 ## 🧭 Diagrama do Fluxo (Mermaid)
 
+<img width="2567" height="3224" alt="mermaid-diagram" src="https://github.com/user-attachments/assets/7e27fd08-6e3e-422c-a57f-180276e72593" />
+
+Obs.: Código - Diagrama do Fluxo
 flowchart TD
   A[Extração Bitrix<br/>(Arquivos .xlsx)] --> B[Power Query (ETL)<br/>Limpeza • Padronização • Consolidação]
   B --> C[Tabelas Estruturadas no Excel<br/>Histórico_Bitrix • Correção_Automática • Registros_Contatos_*]
