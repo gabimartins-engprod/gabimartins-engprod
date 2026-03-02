@@ -1,0 +1,50 @@
+# =====================================================
+# PROJETO: Rotina_Dados – Postalis
+# Proteção contra envio de dados sensíveis
+# =====================================================
+
+# =============================
+# Pastas de dados reais
+# =============================
+
+postalis/files/
+postalis/arquivos/
+postalis/extracoes/
+postalis/dados_reais/
+
+# =============================
+# Arquivos Excel (evitar subir extrações reais)
+# =============================
+
+*.xlsx
+*.xlsm
+*.xls
+
+# ⚠️ Caso futuramente queira subir um Excel exemplo,
+# remova essa regra ou crie exceção específica.
+
+# =============================
+# Arquivos temporários do Excel
+# =============================
+
+~$*.xlsx
+~$*.xlsm
+
+# =============================
+# Logs locais
+# =============================
+
+*.log
+
+# =============================
+# Arquivos de sistema
+# =============================
+
+.DS_Store
+Thumbs.db
+
+# =============================
+# Arquivos temporários gerais
+# =============================
+
+*.tmp
