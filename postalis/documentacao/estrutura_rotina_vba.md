@@ -16,23 +16,25 @@ Documentar a arquitetura do **fluxo VBA**, deixando claro:
 
 ## Etapas gerais (fluxo VBA)
 
-**1. Abertura do arquivo**
+**1.** Abertura do arquivo
 
-**2. Preparação do Power Query (sem background)**
+**2.** Preparação do Power Query (BackgroundQuery = False)
 
-**3. Atualização das consultas (RefreshAll)**
+**3.** Atualização das consultas (RefreshAll + Wait)
 
-**4. Aplicação de fórmulas e layout**
+**4.** Aplicação de fórmulas e layout
 
-**5. Sincronização da base final (Dentro/Fora + datas)**
+**5.** Sincronização da base final (Dentro/Fora + datas)
 
-**6. Sincronização e manutenção da base manual**
+**6.** Sincronização e manutenção da base manual
 
-**7. Geração/atualização do Log_Sincronizacao**
+**7.** Backfill de pendências operacionais
 
-**8. Recalcular e atualizar pivôs**
+**8.** Geração/atualização do Log_Sincronizacao
 
-**9. Finalização**
+**9.** Recalcular métricas e atualizar pivôs
+
+**10.** Finalização controlada
 
 ## Observações
 
@@ -132,6 +134,10 @@ Aplicar layout padronizado nas abas principais sem o custo do AutoFit completo n
 - Registros Contatos Manual
 
 #### Responsabilidades principais
+
+- Tipo de responsabilidade:
+  
+   → Camada exclusivamente visual (não interfere na lógica de dados)
 
 - Ajustar altura de linhas:
 
@@ -249,7 +255,7 @@ Módulo central de sincronização de registros, responsável por manter consist
 
 **(A) Sincronizar_AteX_RegistrosContatos**
 
-- Garante colunas: Status, Data Entrada, Data Saída
+- Garante colunas: Status, Primeira Aparição (Data Entrada Operacional), Data Saída
 
 - Define status:
 
@@ -259,7 +265,7 @@ Módulo central de sincronização de registros, responsável por manter consist
 
 - Preenche:
 
-     → Data Entrada quando vazio (dataRef)
+     → Primeira Aparição (Data Entrada Operacional) quando vazio (dataRef)
 
      → Data Saída quando passa a “fora”
 
@@ -279,7 +285,7 @@ Módulo central de sincronização de registros, responsável por manter consist
 
 - Preenche pendências de datas na Manual:
 
-     → Data Entrada
+     → Primeira Aparição (Data Entrada Operacional)
 
      → Data Saída
 
@@ -300,6 +306,14 @@ Módulo central de sincronização de registros, responsável por manter consist
 - Usa Scripting.Dictionary para performance (sets e presença diária)
 
 - Backfill é limitado a pendentes (mais leve e seguro).
+
+### Princípio de integridade histórica
+
+- O sistema nunca remove registros manualmente inseridos
+
+- IDs são tratados como persistentes
+
+- Datas operacionais só são recalculadas quando pendentes
 
  ---
 
@@ -382,6 +396,20 @@ Executar o fluxo ponta a ponta: atualizar consultas, aplicar regras, sincronizar
 - Garante retorno ao estado anterior ao finalizar, mesmo em erro
 
 - Mantém marco de processamento (MARCO) para retomar de onde parou.
+
+### Controle de Ambiente
+
+Durante a execução:
+
+- Application.ScreenUpdating = False
+
+- Application.EnableEvents = False
+
+- Application.Calculation = xlCalculationManual
+
+E restaurado ao final, inclusive em erro.
+
+---
 
 # Mapa rápido de dependências (VBA)
 
