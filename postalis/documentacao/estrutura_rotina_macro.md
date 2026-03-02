@@ -21,6 +21,7 @@ Documentar a macro principal responsável por orquestrar toda a execução da ro
 ## 🔘 Macro Principal
 
 ### AtualizarTudo_E_Sincronizar  
+
 Localização: `modExecucao`
 
 ### Função
