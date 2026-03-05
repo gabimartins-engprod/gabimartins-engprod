@@ -167,13 +167,13 @@ Caso alguma coluna obrigatória não exista na origem, é criada com valores nul
 
 ---
 
-### Registros_Contatos_Manual - VERSÃO: Atualizado em 09/02/2026
+### Registros_Contatos_Manual - VERSÃO: Atualizado em 03/03/2026
 
 Consulta destinada à leitura da base manual persistente de contatos.
 
-**Finalidade**  
-Expor a tabela de preenchimento manual com tipagem consistente, servindo como base auxiliar para:
-- merge com a base automática (`Registros_Contatos_Final`);
+**Finalidade**
+Expor a tabela de preenchimento manual com tipagem consistente, utilizada como base auxiliar para:
+- mesclar com a base automática (Registros_Contatos_Final);
 - uso em rotinas VBA;
 - cálculo posterior de métricas (ex.: último contato, dias sem contato).
 
@@ -185,55 +185,93 @@ Expor a tabela de preenchimento manual com tipagem consistente, servindo como ba
 - Blindada contra ausência ou renomeação de colunas.
 
 **Regras de tipagem**
-- `Created on`: datetime (data e hora).
-- `Data_1` a `Data_5`: date (somente data).
-- Campos textuais (ID, telefone, observações, responsáveis, e-mail, etc.): text.
+- Created on: data e hora.
+
+**Campos de controle do ciclo:**
+- Data Entrada
+- Data Saída
+- Data Retorno
+- Status
+
+**Histórico de contatos:**
+- Data_1 até Data_10 → tipo data.
+- Campos textuais (ID, telefone, observações, responsáveis, e-mail, etc.): texto.
 
 **Fonte de dados**
-- Tabela Excel `Registros_Contatos_Manual` (ThisWorkbook).
+- Tabela Excel **Registros_Contatos_Manual**
+(EstaPastaDeTrabalho / Excel.CurrentWorkbook)
 
 **Tipo de carga**
 - Leitura direta local, sem dependências externas.
 
 **Observação**
-Esta consulta representa a camada de dados manuais persistentes do sistema e não deve sofrer transformações que impliquem perda de informação.
+Esta consulta representa a camada de dados manuais persistentes do sistema e **não deve sofrer transformações que impliquem perda de informação.**
+
+A tipagem é aplicada dinamicamente apenas nas colunas existentes, garantindo robustez caso novas colunas sejam adicionadas à planilha manual.
 
 ---
 
-### Registros_Contatos_Final - VERSÃO: Atualizado em 09/02/2026
+### Registros_Contatos_Final - VERSÃO: Atualizado em 03/03/2026
 
 Consulta principal de consolidação da Rotina_Dados – Postalis.
 
-**Finalidade**  
-Unificar a base automática de contatos com os dados manuais persistentes, produzindo a visão final resumida utilizada para acompanhamento operacional e métricas.
+**Finalidade**
+Unificar a base automática de contatos com os dados manuais persistentes, produzindo a visão final resumida utilizada para acompanhamento operacional e análises.
 
 **Fluxo lógico**
-- Base automática (`Registros_Contatos_Auto`) como referência de IDs ativos.
-- Base manual (`Registros_Contatos_Manual`) como fonte de histórico humano de contatos.
-- Merge por `ID` com proteção para manter apenas uma linha manual por ID.
-- Aplicação da regra oficial de “Último Contato”.
+
+Base automática (Registros_Contatos_Auto) como referência de IDs ativos.
+
+Base manual (Registros_Contatos_Manual) como fonte de histórico humano de contatos.
+
+Merge por ID com proteção para manter apenas uma linha manual por ID.
+
+Aplicação da regra oficial de identificação do Último Contato.
+
+Utilização do Dia do Painel para cálculo de métricas operacionais.
 
 **Regra de Último Contato**
-- Considera exclusivamente `Data_1` a `Data_5`.
+Considera exclusivamente as colunas:
+- Data_1 até Data_10.
 - Último contato = maior data preenchida.
-- Em caso de empate, prevalece o maior índice (5 > 4 > … > 1).
+- Em caso de empate, vence o maior índice (10 > 9 > … > 1).
 - OBS e Responsável são associados à mesma posição da data escolhida.
 
 **Campos derivados**
-- `Data` (último contato)
-- `OBS` (observação do último contato)
-- `Responsável` (responsável do último contato)
-- `Qtd. tentativas` (quantidade de datas preenchidas entre Data_1 e Data_5)
-- `Dias sem contato` (diferença em dias entre hoje e o último contato)
+
+- Data (último contato)
+- OBS (observação do último contato)
+- Responsável (responsável pelo último contato)
+- Qtd. tentativas
+- (quantidade de datas preenchidas entre Data_1 e Data_10)
+- Dias sem contato
+- (diferença em dias entre o Dia do Painel e o último contato)
+
+**Dia do Painel**
+O Dia do Painel é definido como:
+- max(DataArquivo)
+- da consulta Correção_Automática.
+- Essa data representa o dia efetivo da última extração Bitrix.
+- Caso não exista DataArquivo disponível, o sistema utiliza o baseline oficial do ciclo operacional:
+01/02/2026
+- Esse baseline garante que a rotina nunca utilize a data do computador como fallback, preservando a consistência dos cálculos.
+
+**Proteções aplicadas**
+- Remoção preventiva da coluna Data Entrada da base automática antes do merge, evitando duplicidade de campos.
+- Uso exclusivo da Data Entrada da base manual como referência real de entrada do ID no ciclo de acompanhamento.
+- Proteção contra valores negativos no cálculo de Dias sem contato.
 
 **Características**
 - Não altera dados de origem.
 - Não recria nem remove registros.
 - Mantém uma linha por ID na saída.
-- Preparada para integração com rotinas VBA (Dentro/Fora, Datas históricas, logs).
+- Preparada para integração com rotinas VBA (controle de ciclo, logs e sincronizações).
 
 **Fonte de dados**
-- Consultas internas do Power Query.
+Consultas internas do Power Query:
+- Correção_Automática
+- Registros_Contatos_Auto
+- Registros_Contatos_Manual
 
 **Tipo de carga**
 - Consolidação local (Power Query).
