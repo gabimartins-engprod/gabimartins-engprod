@@ -172,12 +172,14 @@ Caso alguma coluna obrigatória não exista na origem, é criada com valores nul
 Consulta destinada à leitura da base manual persistente de contatos.
 
 **Finalidade**
+
 Expor a tabela de preenchimento manual com tipagem consistente, utilizada como base auxiliar para:
 - mesclar com a base automática (Registros_Contatos_Final);
 - uso em rotinas VBA;
 - cálculo posterior de métricas (ex.: último contato, dias sem contato).
 
 **Características principais**
+
 - Não altera dados.
 - Não recria a tabela.
 - Não remove nem insere registros.
@@ -185,29 +187,35 @@ Expor a tabela de preenchimento manual com tipagem consistente, utilizada como b
 - Blindada contra ausência ou renomeação de colunas.
 
 **Regras de tipagem**
+
 - Created on: data e hora.
 
 **Campos de controle do ciclo:**
+
 - Data Entrada
 - Data Saída
 - Data Retorno
 - Status
 
 **Histórico de contatos:**
+
 - Data_1 até Data_10 → tipo data.
 - Campos textuais (ID, telefone, observações, responsáveis, e-mail, etc.): texto.
 
 **Fonte de dados**
+
 - Tabela Excel **Registros_Contatos_Manual**
 (EstaPastaDeTrabalho / Excel.CurrentWorkbook)
 
 **Tipo de carga**
+
 - Leitura direta local, sem dependências externas.
 
 **Observação**
+
 Esta consulta representa a camada de dados manuais persistentes do sistema e **não deve sofrer transformações que impliquem perda de informação.**
 
-A tipagem é aplicada dinamicamente apenas nas colunas existentes, garantindo robustez caso novas colunas sejam adicionadas à planilha manual.
+**A tipagem é aplicada dinamicamente apenas nas colunas existentes, garantindo robustez caso novas colunas sejam adicionadas à planilha manual.**
 
 ---
 
@@ -216,21 +224,23 @@ A tipagem é aplicada dinamicamente apenas nas colunas existentes, garantindo ro
 Consulta principal de consolidação da Rotina_Dados – Postalis.
 
 **Finalidade**
+
 Unificar a base automática de contatos com os dados manuais persistentes, produzindo a visão final resumida utilizada para acompanhamento operacional e análises.
 
 **Fluxo lógico**
 
-Base automática (Registros_Contatos_Auto) como referência de IDs ativos.
+- Base automática (Registros_Contatos_Auto) como referência de IDs ativos.
 
-Base manual (Registros_Contatos_Manual) como fonte de histórico humano de contatos.
+- Base manual (Registros_Contatos_Manual) como fonte de histórico humano de contatos.
 
-Merge por ID com proteção para manter apenas uma linha manual por ID.
+- Merge por ID com proteção para manter apenas uma linha manual por ID.
 
-Aplicação da regra oficial de identificação do Último Contato.
+- Aplicação da regra oficial de identificação do Último Contato.
 
-Utilização do Dia do Painel para cálculo de métricas operacionais.
+- Utilização do Dia do Painel para cálculo de métricas operacionais.
 
 **Regra de Último Contato**
+
 Considera exclusivamente as colunas:
 - Data_1 até Data_10.
 - Último contato = maior data preenchida.
@@ -248,6 +258,7 @@ Considera exclusivamente as colunas:
 - (diferença em dias entre o Dia do Painel e o último contato)
 
 **Dia do Painel**
+
 O Dia do Painel é definido como:
 - max(DataArquivo)
 - da consulta Correção_Automática.
@@ -257,23 +268,27 @@ O Dia do Painel é definido como:
 - Esse baseline garante que a rotina nunca utilize a data do computador como fallback, preservando a consistência dos cálculos.
 
 **Proteções aplicadas**
+
 - Remoção preventiva da coluna Data Entrada da base automática antes do merge, evitando duplicidade de campos.
 - Uso exclusivo da Data Entrada da base manual como referência real de entrada do ID no ciclo de acompanhamento.
 - Proteção contra valores negativos no cálculo de Dias sem contato.
 
 **Características**
+
 - Não altera dados de origem.
 - Não recria nem remove registros.
 - Mantém uma linha por ID na saída.
 - Preparada para integração com rotinas VBA (controle de ciclo, logs e sincronizações).
 
 **Fonte de dados**
+
 Consultas internas do Power Query:
 - Correção_Automática
 - Registros_Contatos_Auto
 - Registros_Contatos_Manual
 
 **Tipo de carga**
+
 - Consolidação local (Power Query).
 
 ---
