@@ -5,7 +5,11 @@ Estas macros podem ser executadas manualmente pelo usuário para validação, co
 ---
 
 ## AplicarFormulasPendencias
-Executa reaplicação das fórmulas auxiliares na base consolidada.
+Módulo mantido por compatibilidade com o fluxo principal.
+
+Na arquitetura atual não aplica fórmulas nem altera estrutura
+de tabelas. Atua apenas como etapa intermediária chamada pelo
+botão principal para manter organização do fluxo VBA.
 
 ## AplicarLayoutPadraoTabelas
 Padroniza layout visual das tabelas do sistema.
