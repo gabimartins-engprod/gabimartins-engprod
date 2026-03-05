@@ -36,9 +36,14 @@ Executar toda a rotina de atualização, sincronização e geração de históri
 
 ### 3️⃣ Sincronização Interna
 - Rotina_Sincronizar_E_Recalcular
+  → aplica layout padronizado e recalcula estruturas auxiliares
 - Sincronizar_AteX_RegistrosContatos
+  → sincroniza Registros_Contatos_Final com Correção_Automática
 - Inclusão manual de novos IDs
+  → Manual_IncluirNovosIDs_PeloFinal
+  → Manual_IncluirIDs_PeloHistorico_0202
 - Backfill pendente
+  → Manual_Backfill_Rapido_0202
 
 ### 4️⃣ Geração do Log
 - BuildLog_FromHistorico_FillMissingDays
