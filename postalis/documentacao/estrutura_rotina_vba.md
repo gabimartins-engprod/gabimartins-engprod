@@ -16,23 +16,23 @@ Documentar a arquitetura do **fluxo VBA**, deixando claro:
 
 ## Etapas gerais (fluxo VBA)
 
-**1.** Abertura do arquivo
+**1.** Abertura do arquivo (Workbook_Open)
 
 **2.** Preparação do Power Query (BackgroundQuery = False)
 
 **3.** Atualização das consultas (RefreshAll + Wait)
 
-**4.** Aplicação de fórmulas e layout
+**4.** Aplicação de layout padronizado (sem fórmulas na arquitetura atual)
 
-**5.** Sincronização da base final (Dentro/Fora + datas)
+**5.** Sincronização da base final (inclusão/atualização de IDs + Data Entrada)
 
-**6.** Sincronização e manutenção da base manual
+**6.** Sincronização do Manual (inclusão de IDs + backfill pendentes)
 
-**7.** Backfill de pendências operacionais
+**7.** Geração/atualização do Log_Sincronizacao (dias com e sem extração)
 
-**8.** Geração/atualização do Log_Sincronizacao
+**8.** Recalcular + correções finais (TotalDia)
 
-**9.** Recalcular métricas e atualizar pivôs
+**9.** Atualização de pivôs
 
 **10.** Finalização controlada
 
@@ -167,153 +167,92 @@ Aplicar layout padronizado nas abas principais sem o custo do AutoFit completo n
 
  ---
 
-### modAplicarFormulasPendencias — VERSÃO: 25/02/2026
+### modAplicarFormulasPendencias — VERSÃO: 03/03/2026
 
-Módulo responsável por aplicar fórmulas (PROCX/LET) na tabela **Correção_Automática**, espelhando informações preenchidas manualmente na tabela final.
+Módulo mantido por compatibilidade com o fluxo principal do sistema (modExecucao), atuando como etapa intermediária para padronização visual e encadeamento da rotina.
 
-#### Finalidade
+**Finalidade**
+Na arquitetura atual, este módulo NÃO aplica fórmulas na tabela Correção_Automática e NÃO cria colunas.
+Ele permanece ativo para:
+- manter compatibilidade com chamadas existentes do botão principal;
+- aplicar layout padronizado ao final do refresh (via modLayoutPadrao).
 
-Garantir que a base **Correção_Automática carregue**, via fórmula, os campos manuais existentes na **Registros_Contatos_Final**, centralizando o espelhamento.
+**Responsabilidades principais**
+- Garantir que nenhuma coluna estrutural seja criada automaticamente na Correção_Automática.
+- Servir como “ponte” de compatibilidade para o modExecucao.
+- Aplicar layout padronizado após atualização.
 
-#### Tabelas envolvidas
+**Integração com layout**
+Wrapper Rotina_Sincronizar_E_Recalcular chama:
+→ AplicarFormulasPendencias (vazio por design na arquitetura atual)
+→ modLayoutPadrao.AplicarLayoutPadraoTabelas
 
-- Destino: Correção_Automática
+**Tipo de execução**
+Etapa de pós-processamento (layout) + compatibilidade do fluxo VBA.
 
-- Fonte: Registros_Contatos_Final
-
-#### Responsabilidades principais
-
-- Definir e manter mapa de colunas (COLS_MAP)
-
-- Criar colunas ausentes no destino quando necessário
-
-- Aplicar fórmulas por coluna:
-
-     → campos de data com conversão robusta (DATA.VALOR quando texto)
-
-     → campos de texto com retorno vazio quando nulo/zero
-
-- Aplicar formatos:
-
-     → datas (ex.: dd/mmm/aa)
-
-     → e-mail e telefone como texto
-
-#### Otimização (TURBO)
-
-- Só reescreve a fórmula quando:
-
-     → a coluna é nova, ou
-
-     → a fórmula mudou (comparação normalizada)
-
-#### Integração com layout
-
-- Wrapper Rotina_Sincronizar_E_Recalcular chama:
-
-     → AplicarFormulasPendencias
-
-     → modLayoutPadrao.AplicarLayoutPadraoTabelas
-
-#### Observação (Opção A)
-
-- Este módulo **não** orquestra sincronizações (para evitar duplicidade)
-
-- A orquestração fica centralizada no modExecucao
+**Observações técnicas**
+- O módulo está “blindado” para não alterar a Correção_Automática.
+- Se no futuro for necessário espelhar campos, isso deve ser feito SOMENTE em colunas já existentes (planejado previamente).
 
 ---
 
-### modSincronizarContatos — VERSÃO: 25/02/2026
+### modSincronizarContatos — VERSÃO: 03/03/2026
 
-Módulo central de sincronização de registros, responsável por manter consistência entre a base automática, a base final e a base manual.
+Módulo central de sincronização e manutenção de bases de contato, responsável por manter consistência entre a base automática (Correção_Automática), a base final (Registros_Contatos_Final) e a base manual (Registros_Contatos_Manual), aplicando regra oficial de ciclo baseada em DataArquivo (Histórico Bitrix).
 
-#### Finalidade
+**Finalidade**
+1) Sincronizar Registros_Contatos_Final com Correção_Automática (inclusão e atualização de IDs).
+2) Manter e alimentar Registros_Contatos_Manual com IDs e dados operacionais (Status, Data Saída, Data Retorno e backfill).
 
-**1.** Sincronizar **Registros_Contatos_Final** com **Correção_Automática**
-
-**2.** Manter e alimentar **Registros_Contatos_Manual** com IDs e datas operacionais
-
-#### Tabelas envolvidas
-
+**Tabelas**
 - Correção_Automática (base automática tratada)
-
-- Registros_Contatos_Final (base oficial consolidada)
-
-- Registros_Contatos_Manual (base persistente manual)
-
+- Registros_Contatos_Final (base oficial consolidada — mantém apenas Data Entrada)
+- Registros_Contatos_Manual (base operacional — controla Status, Data Saída e Data Retorno)
 - Histórico: tblHistoricoBitrix (aba Histórico Bitrix)
 
-#### Conceitos e regras
+**Baseline e regras**
+- BASELINE OFICIAL: 01/02/2026
+- Backfill/ciclo percorrem somente dias com extração (dias existentes em DataArquivo no Histórico).
+- DataHoraExtracao é opcional e, quando existe, serve para selecionar “última foto do dia”.
 
-- BASELINE conceitual: **01/02/2026**
+**Responsabilidades principais (por rotina)**
 
-- Backfill e ciclo percorrem **somente dias com extração** (baseados em DataArquivo)
+**(A)** Sincronizar_AteX_RegistrosContatos
+Sincroniza Final com Correção_Automática garantindo:
+- inclusão de novos IDs vindos da extração;
+- atualização de Nome e Matrícula quando disponíveis;
+- preenchimento de Data Entrada somente quando vazia (dataRef = Dia do Painel);
+- NÃO criação de colunas estruturais (evita duplicidades).
 
-- DataHoraExtracao é opcional e, quando existe, serve para selecionar “última foto do dia”
+⚠️ **Importante:**
+A tabela Final mantém apenas Data Entrada.
+Status, Data Saída e Data Retorno são controlados exclusivamente na tabela Manual.
 
-#### Responsabilidades principais (por rotina)
+**(B)** Manual_IncluirNovosIDs_PeloFinal
+Inclui IDs que existem no Final, mas não existem no Manual.
+Copia campos-chave: Parent task ID, Created on, Matrícula e Nome.
 
-**(A) Sincronizar_AteX_RegistrosContatos**
+**(C)** Manual_IncluirIDs_PeloHistorico_0202
+Inclui IDs novos diretamente do Histórico desde o baseline.
+Critério: pega a linha mais recente por ID (maior DataArquivo; desempate por DataHoraExtracao quando existir).
 
-- Garante colunas: Status, Primeira Aparição (Data Entrada Operacional), Data Saída
+**(D)** Manual_Backfill_Pendentes_0202 (Backfill leve – somente pendentes)
+Verifica pendências de dados no Manual:
+→ Data Entrada
+→ Data Saída
+→ Data Retorno
+Regras:
+- Limpa datas inválidas (dias que não são dia de extração).
+- Calcula saída/retorno percorrendo apenas extrDates (dias com extração).
 
-- Define status:
+**Tipo de execução**
+Execução por etapas, chamada pelo modExecucao.
 
-     → Dentro da extração quando ID está no conjunto atual
-
-     → Fora da extração quando não está
-
-- Preenche:
-
-     → Primeira Aparição (Data Entrada Operacional) quando vazio (dataRef)
-
-     → Data Saída quando passa a “fora”
-
-**(B) Manual_IncluirNovosIDs_PeloFinal**
-
-- Inclui IDs que existem no Final mas não existem na Manual
-
-- Copia campos chave: Parent task ID, Created on, Matrícula, Nome
-
-**(C) Manual_IncluirIDs_PeloHistorico_0202**
-
-- Inclui IDs novos diretamente do Histórico desde o baseline
-
-- Critério: pega a linha mais recente por ID (maior DataArquivo; desempate por DataHoraExtracao)
-
-**(D) Manual_Backfill_Pendentes_0202 (Backfill leve)**
-
-- Preenche pendências de datas na Manual:
-
-     → Primeira Aparição (Data Entrada Operacional)
-
-     → Data Saída
-
-     → Data Retorno
-
-- Limpa datas inválidas (dia sem extração)
-
-- Calcula saída/retorno percorrendo apenas extrDates (dias com extração)
-
-#### Tipo de execução
-
-- Execução por etapas, chamada pelo modExecucao
-
-#### Observações técnicas
-
-- IDs são tratados como texto (NumberFormat = "@")
-
-- Usa Scripting.Dictionary para performance (sets e presença diária)
-
-- Backfill é limitado a pendentes (mais leve e seguro).
-
-### Princípio de integridade histórica
-
-- O sistema nunca remove registros manualmente inseridos
-
-- IDs são tratados como persistentes
-
-- Datas operacionais só são recalculadas quando pendentes
+**Observações técnicas**
+- IDs tratados como texto (NumberFormat="@").
+- Usa Scripting.Dictionary para performance (sets e presença diária).
+- Preenchimento limitado a pendentes (mais leve e seguro).
+- O sistema nunca remove registros inseridos manualmente (base persistente).
 
  ---
 
