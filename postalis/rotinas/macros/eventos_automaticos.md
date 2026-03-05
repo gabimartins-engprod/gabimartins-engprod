@@ -1,10 +1,9 @@
-# Eventos Automáticos
-
-## Workbook_Open
+# Evento: Workbook_Open
 
 Executado automaticamente ao abrir o arquivo.
 
-Responsável por:
-- Executar PQ_BackgroundOff
-- Garantir que o Power Query não rode em background
-- Assegurar previsibilidade do fluxo VBA
+## Responsável por:
+
+- Executar modPQPowerQuery.PQ_BackgroundOff
+- Garantir que o Power Query não rode em segundo plano
+- Assegurar previsibilidade no fluxo de atualização VBA
