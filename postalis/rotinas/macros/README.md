@@ -5,8 +5,12 @@ Esta pasta documenta os pontos de execução do sistema Rotina_Dados – Postali
 Existem três categorias de macros:
 
 1. Macro principal (botão)
-2. Macros executáveis manualmente (Ctrl + F8)
+2. Macros operacionais executáveis manualmente (Ctrl + F8)
 3. Eventos automáticos (Workbook_Open)
+
+O fluxo principal da rotina é executado exclusivamente pela macro
+AtualizarTudo_E_Sincronizar, responsável por orquestrar Power Query,
+sincronizações internas e geração de histórico.
 
 ---
 
