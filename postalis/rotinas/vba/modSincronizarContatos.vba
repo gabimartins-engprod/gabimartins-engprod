@@ -1,41 +1,20 @@
+' =========================
+' modSincronizarContatos
+' =========================
 Option Explicit
 
 ' =====================================================================================
 ' MÓDULO: modSincronizarContatos
 ' SISTEMA: Rotina_Dados – Postalis
 ' FINALIDADE:
-'   (1) Sincronizar Registros_Contatos_Final com Correção_Automática:
-'       - incluir novos IDs da extração
-'       - atualizar Nome/Matrícula quando disponível
-'       - manter Status e preencher Datas (Entrada/Saída) conforme presença na extração
-'   (2) Sincronizar Registros_Contatos_Manual:
-'       - incluir IDs novos (a partir do Final e/ou do Histórico)
-'       - backfill leve de datas (Entrada/Saída/Retorno) apenas para pendentes
+'   (1) Sincronizar Registros_Contatos_Final com Correção_Automática
+'   (2) Sincronizar Registros_Contatos_Manual (incluir novos IDs + backfill leve)
 '
-' ORIGEM DOS DADOS:
-'   - Tabela "Correção_Automática" (TBL_EXT)
-'   - Tabela "Registros_Contatos_Final" (TBL_CONT)
-'   - Tabela "tblHistoricoBitrix" (TB_HIST) na aba "Histórico Bitrix"
+' BASELINE:
+'   - Período oficial: 01/02/2026 (conceitual do mês)
+'   - Backfill/ciclo só percorre DIAS COM EXTRAÇÃO (DataArquivo no Histórico)
 '
-' DESTINO:
-'   - Tabela "Registros_Contatos_Final" (atualização de Status/Data Entrada/Data Saída e inclusão de IDs)
-'   - Tabela "Registros_Contatos_Manual" (inclusão de IDs e preenchimento de datas pendentes)
-'
-' COMPORTAMENTO TÉCNICO:
-'   - BASELINE conceitual: 01/02/2026.
-'   - Backfill/ciclo só percorre DIAS COM EXTRAÇÃO (DataArquivo no Histórico).
-'   - DataHoraExtracao (quando existir) é usada para definir "foto válida" do dia (última extração).
-'
-' MACROS PÚBLICAS:
-'   - Sincronizar_AteX_RegistrosContatos: sincroniza Final com a Extração (Dentro/Fora + datas).
-'   - Manual_IncluirNovosIDs_PeloFinal: inclui IDs novos na Manual a partir do Final.
-'   - Manual_IncluirIDs_PeloHistorico_0202: inclui IDs novos direto do Histórico (linha mais recente por ID).
-'   - Manual_Backfill_Rapido_0202: wrapper para backfill leve (pendentes) na Manual.
-'
-' DEPENDÊNCIAS:
-'   - Chamado por: modExecucao.AtualizarTudo_E_Sincronizar
-'
-' VERSÃO: 25/02/2026 (baseline 01/02 + mantém regra "dias com extração")
+' VERSÃO: 03/03/2026 (fix diaPainel: nunca Date; FINAL sem criar colunas)
 ' RESPONSÁVEL: Gabi (Postalis)
 ' =====================================================================================
 
@@ -89,8 +68,9 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
     If loExt Is Nothing Then MsgBox "Tabela '" & TBL_EXT & "' não encontrada.", vbExclamation: GoTo Fim
     If loCont Is Nothing Then MsgBox "Tabela '" & TBL_CONT & "' não encontrada.", vbExclamation: GoTo Fim
 
+    ' DIA DO PAINEL (OFICIAL): max(DataArquivo). Nunca usar Date/Now aqui.
     Dim dataRef As Date
-    dataRef = GetLatestHistoricoDateOrToday()
+    dataRef = GetDiaPainel_Historico()
     If dataRef < BASELINE_D Then dataRef = BASELINE_D
 
     Dim idxExtID As Long, idxExtNome As Long, idxExtMat As Long
@@ -115,14 +95,18 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
     If GetListColIndex(loCont, "Created on") = 0 Then MsgBox "Coluna 'Created on' não encontrada na '" & TBL_CONT & "'.", vbExclamation: GoTo Fim
     If GetListColIndex(loCont, "Parent task ID") = 0 Then MsgBox "Coluna 'Parent task ID' não encontrada na '" & TBL_CONT & "'.", vbExclamation: GoTo Fim
 
-    EnsureListColumn loCont, COL_STATUS
-    EnsureListColumn loCont, COL_DTENT
-    EnsureListColumn loCont, COL_DTSAI
-
+    ' >>> IMPORTANTE (PÓS-AJUSTE):
+    ' Registros_Contatos_Final é tabela carregada por Power Query.
+    ' Não criar colunas aqui para não reintroduzir duplicidade (ex.: Data Entrada).
     Dim idxContStatus As Long, idxContEnt As Long, idxContSai As Long
     idxContStatus = GetListColIndex(loCont, COL_STATUS)
     idxContEnt = GetListColIndex(loCont, COL_DTENT)
     idxContSai = GetListColIndex(loCont, COL_DTSAI)
+
+    If idxContStatus = 0 Or idxContEnt = 0 Or idxContSai = 0 Then
+        MsgBox "A tabela '" & TBL_CONT & "' precisa conter as colunas: '" & COL_STATUS & "', '" & COL_DTENT & "', '" & COL_DTSAI & "' (via Power Query).", vbExclamation
+        GoTo Fim
+    End If
 
     ApplyTextFormatColumn loExt, COL_ID
     ApplyTextFormatColumn loCont, COL_ID
@@ -170,9 +154,9 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
             If Len(Trim$(CStr(dictExt(CStr(k))(0)))) > 0 Then lr.Range.Cells(1, idxContNome).Value = dictExt(CStr(k))(0)
             If Len(Trim$(CStr(dictExt(CStr(k))(1)))) > 0 Then lr.Range.Cells(1, idxContMat).Value = dictExt(CStr(k))(1)
 
-            If idxContStatus > 0 Then lr.Range.Cells(1, idxContStatus).Value = ST_DENTRO
-            If idxContEnt > 0 Then lr.Range.Cells(1, idxContEnt).Value = dataRef
-            If idxContSai > 0 Then lr.Range.Cells(1, idxContSai).ClearContents
+            lr.Range.Cells(1, idxContStatus).Value = ST_DENTRO
+            lr.Range.Cells(1, idxContEnt).Value = dataRef
+            lr.Range.Cells(1, idxContSai).ClearContents
 
             If Not loCont.DataBodyRange Is Nothing Then
                 dictRow(CStr(k)) = loCont.DataBodyRange.Rows.Count
@@ -191,27 +175,20 @@ Public Sub Sincronizar_AteX_RegistrosContatos()
             estaNaExtracao = dictExt.Exists(idNow)
 
             Dim statusAtual As String
-            statusAtual = ""
-            If idxContStatus > 0 Then statusAtual = Trim$(CStr(loCont.DataBodyRange.Cells(row, idxContStatus).Value))
+            statusAtual = Trim$(CStr(loCont.DataBodyRange.Cells(row, idxContStatus).Value))
 
             If estaNaExtracao Then
-                If idxContStatus > 0 Then loCont.DataBodyRange.Cells(row, idxContStatus).Value = ST_DENTRO
+                loCont.DataBodyRange.Cells(row, idxContStatus).Value = ST_DENTRO
 
                 If Len(Trim$(CStr(dictExt(idNow)(0)))) > 0 Then loCont.DataBodyRange.Cells(row, idxContNome).Value = dictExt(idNow)(0)
                 If Len(Trim$(CStr(dictExt(idNow)(1)))) > 0 Then loCont.DataBodyRange.Cells(row, idxContMat).Value = dictExt(idNow)(1)
 
-                If idxContSai > 0 Then
-                    If UCase$(statusAtual) = UCase$(ST_FORA) Then loCont.DataBodyRange.Cells(row, idxContSai).ClearContents
-                End If
+                If UCase$(statusAtual) = UCase$(ST_FORA) Then loCont.DataBodyRange.Cells(row, idxContSai).ClearContents
 
-                If idxContEnt > 0 Then
-                    If IsEmptyOrBlank(loCont.DataBodyRange.Cells(row, idxContEnt).Value) Then loCont.DataBodyRange.Cells(row, idxContEnt).Value = dataRef
-                End If
+                If IsEmptyOrBlank(loCont.DataBodyRange.Cells(row, idxContEnt).Value) Then loCont.DataBodyRange.Cells(row, idxContEnt).Value = dataRef
             Else
-                If idxContStatus > 0 Then loCont.DataBodyRange.Cells(row, idxContStatus).Value = ST_FORA
-                If idxContSai > 0 Then
-                    If IsEmptyOrBlank(loCont.DataBodyRange.Cells(row, idxContSai).Value) Then loCont.DataBodyRange.Cells(row, idxContSai).Value = dataRef
-                End If
+                loCont.DataBodyRange.Cells(row, idxContStatus).Value = ST_FORA
+                If IsEmptyOrBlank(loCont.DataBodyRange.Cells(row, idxContSai).Value) Then loCont.DataBodyRange.Cells(row, idxContSai).Value = dataRef
             End If
 
 ProxLinha:
@@ -389,7 +366,7 @@ P1Next:
     End If
 
     ' =========================
-    ' 3) presence(ID)(dayKey)=True e firstSeen(ID)=min day (somente "foto válida" do dia)
+    ' 3) presence(ID)(dayKey)=True e firstSeen(ID)=min day
     ' =========================
     Dim presence As Object: Set presence = CreateObject("Scripting.Dictionary")
     presence.CompareMode = vbTextCompare
@@ -722,6 +699,51 @@ End Sub
 ' HELPERS
 ' ===========================================================
 
+Private Function GetDiaPainel_Historico() As Date
+    ' Regra oficial: dia do painel = max(DataArquivo).
+    ' Se não houver histórico carregado, retorna BASELINE (nunca Date/Now).
+    On Error GoTo Fallback
+
+    Dim loHist As ListObject
+    Set loHist = GetTableByName(TB_HIST)
+    If loHist Is Nothing Then GoTo Fallback
+    If loHist.DataBodyRange Is Nothing Then GoTo Fallback
+
+    Dim idxDA As Long: idxDA = GetListColIndex(loHist, COL_DATAARQUIVO)
+    If idxDA = 0 Then GoTo Fallback
+
+    Dim arr As Variant: arr = loHist.DataBodyRange.Value
+    Dim r As Long, best As Date: best = 0
+
+    For r = 1 To UBound(arr, 1)
+        If Not IsEmpty(arr(r, idxDA)) Then
+            Dim d As Date
+            d = DateValue(CDate(arr(r, idxDA)))
+            If d > best Then best = d
+        End If
+    Next r
+
+    If best = 0 Then GoTo Fallback
+    GetDiaPainel_Historico = best
+    Exit Function
+
+Fallback:
+    GetDiaPainel_Historico = BASELINE_D
+End Function
+
+Public Sub Sincronizar_RegistrosContatos_Manual()
+    On Error GoTo Trata
+    Dim wsMan As Worksheet, loMan As ListObject
+    Set wsMan = ThisWorkbook.Worksheets(SH_MANUAL)
+    Set loMan = wsMan.ListObjects(TBL_MANUAL)
+    If loMan Is Nothing Then Exit Sub
+    If loMan.DataBodyRange Is Nothing Then Exit Sub
+    ApplyTextFormatColumn loMan, COL_ID
+    Exit Sub
+Trata:
+    MsgBox "Erro em Sincronizar_RegistrosContatos_Manual: " & Err.Number & " - " & Err.Description, vbExclamation
+End Sub
+
 Private Function GetTableByName(ByVal tblName As String) As ListObject
     Dim ws As Worksheet, lo As ListObject
     For Each ws In ThisWorkbook.Worksheets
@@ -766,42 +788,6 @@ Private Function IsEmptyOrBlank(ByVal v As Variant) As Boolean
     If Len(Trim$(CStr(v))) = 0 Then IsEmptyOrBlank = True: Exit Function
     IsEmptyOrBlank = False
 End Function
-
-Private Function GetLatestHistoricoDateOrToday() As Date
-    On Error GoTo Fallback
-    Dim loHist As ListObject
-    Set loHist = GetTableByName(TB_HIST)
-    If loHist Is Nothing Then GoTo Fallback
-    If loHist.DataBodyRange Is Nothing Then GoTo Fallback
-    Dim idxDA As Long: idxDA = GetListColIndex(loHist, COL_DATAARQUIVO)
-    If idxDA = 0 Then GoTo Fallback
-    Dim arr As Variant: arr = loHist.DataBodyRange.Value
-    Dim r As Long, best As Date: best = 0
-    For r = 1 To UBound(arr, 1)
-        If Not IsEmpty(arr(r, idxDA)) Then
-            Dim d As Date: d = DateValue(CDate(arr(r, idxDA)))
-            If d > best Then best = d
-        End If
-    Next r
-    If best = 0 Then GoTo Fallback
-    GetLatestHistoricoDateOrToday = best
-    Exit Function
-Fallback:
-    GetLatestHistoricoDateOrToday = Date
-End Function
-
-Public Sub Sincronizar_RegistrosContatos_Manual()
-    On Error GoTo Trata
-    Dim wsMan As Worksheet, loMan As ListObject
-    Set wsMan = ThisWorkbook.Worksheets(SH_MANUAL)
-    Set loMan = wsMan.ListObjects(TBL_MANUAL)
-    If loMan Is Nothing Then Exit Sub
-    If loMan.DataBodyRange Is Nothing Then Exit Sub
-    ApplyTextFormatColumn loMan, COL_ID
-    Exit Sub
-Trata:
-    MsgBox "Erro em Sincronizar_RegistrosContatos_Manual: " & Err.Number & " - " & Err.Description, vbExclamation
-End Sub
 
 Private Function BuildExtractionDaysDict(ByVal arr As Variant, ByVal idxDA As Long, ByVal dMin As Date, ByVal dMax As Date) As Object
     Dim dict As Object: Set dict = CreateObject("Scripting.Dictionary")
