@@ -1,3 +1,5 @@
+No dia 12/05/26: Decidi excluir a coluna "E-MAIL", pois não achei tão necessário no processo.
+
 // =====================================================================================
 // CONSULTA: Registros_Contatos_Manual
 // SISTEMA: Rotina_Dados – Postalis
