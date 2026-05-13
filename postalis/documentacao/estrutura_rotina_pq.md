@@ -167,7 +167,7 @@ Caso alguma coluna obrigatória não exista na origem, é criada com valores nul
 
 ---
 
-### Registros_Contatos_Manual - VERSÃO: Atualizado em 13/05/2026
+### Registros_Contatos_Manual - VERSÃO: Atualizado em 12/05/2026
 
 Consulta destinada à leitura da base manual persistente de contatos.
 
