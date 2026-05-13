@@ -185,27 +185,44 @@ Expor a tabela de preenchimento manual com tipagem consistente, utilizada como b
 - Não remove nem insere registros.
 - Mantém 1 linha por ID (controle humano).
 - Blindada contra ausência ou renomeação de colunas.
+- Aplica tipagem apenas nas colunas existentes da tabela.
 
 **Regras de tipagem**
 
-- Created on: data e hora.
+**Campos principais**
 
-**Campos de controle do ciclo:**
+- Created on → data e hora.
+- ID e Parent task ID → texto.
+- Matrícula e Nome → texto.
+
+**Campos de controle do ciclo**
 
 - Data Entrada
 - Data Saída
 - Data Retorno
-- Status
+  
+  → tipo data.
+
+- Status → texto.
+- Tentativas_Realizadas → número inteiro (Int64.Type).
+
+**Campos auxiliares**
+- Observação Extra
+- Telefone
+- Contato_Extra
+
+→ texto.
 
 **Histórico de contatos:**
 
 - Data_1 até Data_10 → tipo data.
-- Campos textuais (ID, telefone, observações, responsáveis, e-mail, etc.): texto.
+- Tipo_1 até Tipo_10 → texto.
+- OBS_1 até OBS_10 → texto.
+- Responsável_1 até Responsável_10 → texto.
 
 **Fonte de dados**
 
-- Tabela Excel **Registros_Contatos_Manual**
-(EstaPastaDeTrabalho / Excel.CurrentWorkbook)
+Tabela Excel Registros_Contatos_Manual (Excel.CurrentWorkbook).
 
 **Tipo de carga**
 
@@ -213,9 +230,9 @@ Expor a tabela de preenchimento manual com tipagem consistente, utilizada como b
 
 **Observação**
 
-Esta consulta representa a camada de dados manuais persistentes do sistema e **não deve sofrer transformações que impliquem perda de informação.**
+Esta consulta representa a camada de dados manuais persistentes do sistema e não deve sofrer transformações que impliquem perda de informação.
 
-**A tipagem é aplicada dinamicamente apenas nas colunas existentes, garantindo robustez caso novas colunas sejam adicionadas à planilha manual.**
+A tipagem é aplicada dinamicamente apenas nas colunas existentes, garantindo robustez caso colunas sejam adicionadas, removidas ou renomeadas na planilha manual.
 
 ---
 
