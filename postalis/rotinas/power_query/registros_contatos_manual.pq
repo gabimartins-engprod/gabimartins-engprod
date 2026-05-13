@@ -1,16 +1,16 @@
-No dia 12/05/26: Decidi excluir a coluna "E-MAIL", pois não achei tão necessário no processo.
-
 // =====================================================================================
 // CONSULTA: Registros_Contatos_Manual
 // SISTEMA: Rotina_Dados – Postalis
 // FINALIDADE: Expor a tabela de preenchimento manual de contatos com tipagem correta.
 // ORIGEM DOS DADOS: Tabela Excel "Registros_Contatos_Manual" (ThisWorkbook)
 // DESTINO: Consulta auxiliar usada em Registros_Contatos_Final e VBA
-// VERSÃO: Atualizado em 02/03/2026 (Caminho A - 1..10 + colunas novas)
+// VERSÃO: Atualizado em 12/05/2026
 // RESPONSÁVEL: Gabi (Postalis)
 // OBSERVAÇÕES IMPORTANTES:
 // - NÃO altera dados: apenas lê a tabela já existente no Excel.
 // - Blindagem completa: só aplica tipagem se a coluna existir.
+// - No dia 12/05/2026 a coluna "E-MAIL" foi removida da base manual,
+//   pois deixou de ser necessária para o fluxo operacional da rotina.
 // =====================================================================================
 let
     Fonte = Excel.CurrentWorkbook(){[Name = "Registros_Contatos_Manual"]}[Content],
@@ -29,7 +29,6 @@ let
         {"Tentativas_Realizadas", Int64.Type},
 
         {"Observação Extra", type text},
-        {"E-mail", type text},
         {"Telefone", type text},
         {"Contato_Extra", type text},
 
@@ -46,8 +45,19 @@ let
     },
 
     ColunasExistentes = Table.ColumnNames(Fonte),
-    TiposAplicaveis = List.Select(TiposDesejados, each List.Contains(ColunasExistentes, _{0})),
 
-    #"Tipo Alterado" = Table.TransformColumnTypes(Fonte, TiposAplicaveis, "pt-BR")
+    TiposAplicaveis =
+        List.Select(
+            TiposDesejados,
+            each List.Contains(ColunasExistentes, _{0})
+        ),
+
+    #"Tipo Alterado" =
+        Table.TransformColumnTypes(
+            Fonte,
+            TiposAplicaveis,
+            "pt-BR"
+        )
+
 in
     #"Tipo Alterado"
